@@ -3,13 +3,15 @@ import unreal
 SOURCE_BLUEPRINT = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 TARGET_BLUEPRINT = "/Game/_Sandbox/Blueprints/BP_POHThirdPersonCharacter"
 HERO_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
+HERO_ANIM_BLUEPRINT = "/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_ABP_Unarmed"
 HERO_MESH_LOCATION = unreal.Vector(0.0, 0.0, -96.0)
 HERO_MESH_ROTATION = unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0)
 
 source = unreal.load_asset(SOURCE_BLUEPRINT)
 hero_mesh = unreal.load_asset(HERO_MESH)
-if not source or not hero_mesh:
-    raise RuntimeError("Template character or Prince mesh is unavailable")
+hero_anim_blueprint = unreal.load_asset(HERO_ANIM_BLUEPRINT)
+if not source or not hero_mesh or not hero_anim_blueprint:
+    raise RuntimeError("Template character, Prince mesh, or retargeted animation blueprint is unavailable")
 
 target = unreal.load_asset(TARGET_BLUEPRINT)
 if not target:
@@ -26,9 +28,10 @@ if not mesh_component:
 mesh_component.set_editor_property("skeletal_mesh_asset", hero_mesh)
 mesh_component.set_editor_property("relative_location", HERO_MESH_LOCATION)
 mesh_component.set_editor_property("relative_rotation", HERO_MESH_ROTATION)
+mesh_component.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_BLUEPRINT)
+mesh_component.set_editor_property("anim_class", hero_anim_blueprint.generated_class())
 
-# Do not replace the template's input, camera, collision or animation state-machine here.
-# The retargeted Animation Blueprint is the next atomic change.
+# Camera, controls and collision remain inherited from UE's Third Person template.
 unreal.BlueprintEditorLibrary.compile_blueprint(target)
 if not unreal.EditorAssetLibrary.save_asset(TARGET_BLUEPRINT, only_if_is_dirty=False):
     raise RuntimeError("Could not save Prince third-person character blueprint")
