@@ -13,10 +13,24 @@ def require_asset(path):
 
 
 hero_mesh = require_asset("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig")
-require_asset("/Game/_Sandbox/Characters/PrinceOfHell/Rigging/IK_POHPrince")
-require_asset("/Game/_Sandbox/Rigging/IK_Mannequin_Template")
-require_asset("/Game/_Sandbox/Rigging/RTG_Mannequin_To_POH")
+hero_rig = require_asset("/Game/_Sandbox/Characters/PrinceOfHell/Rigging/IK_POHPrince")
+manny_rig = require_asset("/Game/_Sandbox/Rigging/IK_Mannequin_Template")
+retargeter = require_asset("/Game/_Sandbox/Rigging/RTG_Mannequin_To_POH")
 character_blueprint = require_asset("/Game/_Sandbox/Blueprints/BP_POHThirdPersonCharacter")
+
+for rig, expected_mesh, label in [
+    (hero_rig, hero_mesh, "Prince"),
+    (manny_rig, require_asset("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple"), "Manny"),
+]:
+    configured_mesh = unreal.IKRigController.get_controller(rig).get_skeletal_mesh()
+    if configured_mesh != expected_mesh:
+        raise RuntimeError("{} IK rig targets the wrong skeletal mesh".format(label))
+
+retarget_controller = unreal.IKRetargeterController.get_controller(retargeter)
+if retarget_controller.get_ik_rig(unreal.RetargetSourceOrTarget.SOURCE) != manny_rig:
+    raise RuntimeError("Retargeter source is not the Manny IK rig")
+if retarget_controller.get_ik_rig(unreal.RetargetSourceOrTarget.TARGET) != hero_rig:
+    raise RuntimeError("Retargeter target is not the Prince IK rig")
 
 generated_class = character_blueprint.generated_class()
 if not generated_class:
