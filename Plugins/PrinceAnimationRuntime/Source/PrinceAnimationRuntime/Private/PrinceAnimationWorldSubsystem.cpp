@@ -135,13 +135,13 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     {
         const APlayerController* Controller = Cast<APlayerController>(Character.GetController());
         const bool bForwardInputHeld = Controller && Controller->IsInputKeyDown(EKeys::W);
+        const bool bDiveInputHeld = bForwardInputHeld && Controller->IsInputKeyDown(EKeys::LeftShift);
         if (!State.bWasAirborne)
         {
-            State.bUseDive = HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::StartWalkingSpeed)
-                || bForwardInputHeld;
+            State.bUseDive = bDiveInputHeld;
             State.bWasAirborne = true;
         }
-        else if (!State.bUseDive && (HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::StartWalkingSpeed) || bForwardInputHeld))
+        else if (!State.bUseDive && bDiveInputHeld)
         {
             // The character may receive movement acceleration one frame after
             // takeoff. Upgrade the rising clip as soon as that intent becomes
