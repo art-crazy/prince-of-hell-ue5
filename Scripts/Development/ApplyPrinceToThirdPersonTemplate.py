@@ -1,18 +1,18 @@
-"""Apply Prince visuals and the individually verified idle animation to UE's pawn."""
+"""Apply Prince visuals and the currently validated single animation to UE's pawn."""
 
 import unreal
 
 
 TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
-PRINCE_IDLE = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle"
+PRINCE_ANIMATION = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF"
 
 
 character = unreal.load_asset(TEMPLATE_CHARACTER)
 mesh_asset = unreal.load_asset(PRINCE_MESH)
-idle_animation = unreal.load_asset(PRINCE_IDLE)
-if not character or not mesh_asset or not idle_animation:
-    raise RuntimeError("Template character, Prince mesh, or idle animation is unavailable")
+animation = unreal.load_asset(PRINCE_ANIMATION)
+if not character or not mesh_asset or not animation:
+    raise RuntimeError("Template character, Prince mesh, or test animation is unavailable")
 
 cdo = unreal.get_default_object(character.generated_class())
 mesh = cdo.get_component_by_class(unreal.SkeletalMeshComponent)
@@ -33,7 +33,7 @@ mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_SINGLE
 mesh.set_editor_property(
     "animation_data",
     unreal.SingleAnimationPlayData(
-        anim_to_play=idle_animation,
+        anim_to_play=animation,
         saved_looping=True,
         saved_playing=True,
         saved_position=0.0,

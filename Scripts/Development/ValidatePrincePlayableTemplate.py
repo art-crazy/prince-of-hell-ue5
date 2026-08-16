@@ -13,7 +13,7 @@ def load(path):
 character = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter")
 game_mode = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode")
 expected_mesh = load("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig")
-expected_idle = load("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle")
+expected_animation = load("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF")
 
 character_cdo = unreal.get_default_object(character.generated_class())
 mesh = character_cdo.get_component_by_class(unreal.SkeletalMeshComponent)
@@ -25,9 +25,9 @@ rotation = mesh.get_editor_property("relative_rotation")
 if abs(rotation.pitch) > 0.01 or abs(rotation.yaw + 90.0) > 0.01 or abs(rotation.roll) > 0.01:
     raise RuntimeError("Prince mesh rotation is not the validated upright orientation")
 if mesh.get_editor_property("animation_mode") != unreal.AnimationMode.ANIMATION_SINGLE_NODE:
-    raise RuntimeError("Prince must use the individually validated idle animation")
-if mesh.get_editor_property("animation_data").anim_to_play != expected_idle:
-    raise RuntimeError("Prince idle animation is not assigned")
+    raise RuntimeError("Prince must use the selected test animation")
+if mesh.get_editor_property("animation_data").anim_to_play != expected_animation:
+    raise RuntimeError("Prince test animation is not assigned")
 
 game_mode_cdo = unreal.get_default_object(game_mode.generated_class())
 if game_mode_cdo.get_editor_property("default_pawn_class") != character.generated_class():
