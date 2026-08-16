@@ -5,7 +5,7 @@ import unreal
 
 TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
-PRINCE_ANIMATION = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF"
+PRINCE_ANIMATION = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle"
 
 
 character = unreal.load_asset(TEMPLATE_CHARACTER)

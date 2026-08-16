@@ -1,0 +1,15 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "Prince Animation Runtime",
+  "Description": "Minimal validated locomotion driver for Prince.",
+  "Category": "Animation",
+  "Modules": [
+    {
+      "Name": "PrinceAnimationRuntime",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ def load(path):
 character = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter")
 game_mode = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode")
 expected_mesh = load("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig")
-expected_animation = load("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF")
+expected_animation = load("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle")
 
 character_cdo = unreal.get_default_object(character.generated_class())
 mesh = character_cdo.get_component_by_class(unreal.SkeletalMeshComponent)

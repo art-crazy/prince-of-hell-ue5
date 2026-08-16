@@ -1,0 +1,32 @@
+#pragma once
+
+#include "Subsystems/WorldSubsystem.h"
+#include "Tickable.h"
+
+#include "PrinceAnimationWorldSubsystem.generated.h"
+
+class UAnimationAsset;
+class USkeletalMeshComponent;
+
+/**
+ * Uses only individually validated clips while the dedicated IK retargeter is
+ * being rebuilt. This avoids the incompatible Control Rig in the bulk export.
+ */
+UCLASS()
+class PRINCEANIMATIONRUNTIME_API UPrinceAnimationWorldSubsystem final : public UTickableWorldSubsystem
+{
+    GENERATED_BODY()
+
+public:
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    virtual void Tick(float DeltaTime) override;
+    virtual TStatId GetStatId() const override;
+    virtual bool IsTickable() const override { return true; }
+
+private:
+    void UpdatePrince(USkeletalMeshComponent& Mesh, float HorizontalSpeed);
+
+    TObjectPtr<UAnimationAsset> IdleAnimation;
+    TObjectPtr<UAnimationAsset> WalkAnimation;
+    TMap<TObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
+};
