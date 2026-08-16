@@ -35,4 +35,7 @@ results = unreal.IKRetargetBatchOperation.run_batch_retarget(inputs)
 if not results:
     raise RuntimeError("Locomotion retarget produced no assets")
 
+if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(False, True):
+    raise RuntimeError("Could not save retargeted locomotion assets")
+
 unreal.log_warning("POH: retargeted {} template locomotion assets".format(len(results)))
