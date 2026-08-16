@@ -139,6 +139,13 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
                 || !Character.GetLastMovementInputVector().IsNearlyZero();
             State.bWasAirborne = true;
         }
+        else if (!State.bUseDive && HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::StartWalkingSpeed))
+        {
+            // The character may receive movement acceleration one frame after
+            // takeoff. Upgrade the rising clip as soon as that intent becomes
+            // measurable instead of leaving it on the standing jump.
+            State.bUseDive = true;
+        }
         UAnimationAsset* Desired = Character.GetVelocity().Z > KINDA_SMALL_NUMBER
             ? (State.bUseDive ? DiveAnimation : JumpAnimation)
             : FallAnimation;
