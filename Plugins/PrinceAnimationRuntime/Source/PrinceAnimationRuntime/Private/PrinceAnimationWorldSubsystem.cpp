@@ -131,19 +131,20 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     if (Movement && Movement->IsFalling())
     {
-        UAnimationAsset* Desired = State.bWasFalling && Character.GetVelocity().Z <= 0.0f
-            ? FallAnimation
-            : JumpAnimation;
+        // The movement component is the authority for airborne state. Using its
+        // vertical velocity makes jumping and walking off an edge deterministic
+        // without carrying transient state between frames.
+        UAnimationAsset* Desired = Character.GetVelocity().Z > KINDA_SMALL_NUMBER
+            ? JumpAnimation
+            : FallAnimation;
         if (Active != Desired)
         {
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
             Mesh.PlayAnimation(Desired, Desired == FallAnimation);
             Active = Desired;
         }
-        State.bWasFalling = true;
         return;
     }
-    State.bWasFalling = false;
 
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;
