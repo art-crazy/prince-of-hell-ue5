@@ -55,6 +55,9 @@ private:
     TObjectPtr<UAnimationAsset> JumpAnimation;
 
     UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> DiveAnimation;
+
+    UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> FallAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */

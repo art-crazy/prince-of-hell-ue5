@@ -16,6 +16,7 @@ namespace PrinceAnimationPaths
     constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripowalk.SK_POHPrince_NativeTripowalk");
     constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTriporun.SK_POHPrince_NativeTriporun");
     constexpr TCHAR Jump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripojump.SK_POHPrince_NativeTripojump");
+    constexpr TCHAR Dive[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/A_POH_NativeTripo_Divedive.A_POH_NativeTripo_Divedive");
     constexpr TCHAR Fall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripofall.SK_POHPrince_NativeTripofall");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
@@ -33,6 +34,7 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
     RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
     JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    DiveAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Dive);
     FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Fall);
 
     if (UWorld* World = GetWorld())
@@ -60,7 +62,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
 void UPrinceAnimationWorldSubsystem::Tick(float)
 {
     UWorld* World = GetWorld();
-    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation || !FallAnimation)
+    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation || !DiveAnimation || !FallAnimation)
     {
         return;
     }
@@ -134,8 +136,9 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
         // The movement component is the authority for airborne state. Using its
         // vertical velocity makes jumping and walking off an edge deterministic
         // without carrying transient state between frames.
+        const bool bMovingAtTakeoff = HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::StartWalkingSpeed);
         UAnimationAsset* Desired = Character.GetVelocity().Z > KINDA_SMALL_NUMBER
-            ? JumpAnimation
+            ? (bMovingAtTakeoff ? DiveAnimation : JumpAnimation)
             : FallAnimation;
         if (Active != Desired)
         {
@@ -179,7 +182,7 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation && FallAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation && DiveAnimation && FallAnimation;
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
