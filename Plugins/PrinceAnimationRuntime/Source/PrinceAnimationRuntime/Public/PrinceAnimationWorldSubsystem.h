@@ -15,11 +15,15 @@ class USkeletalMeshComponent;
 struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
+    bool bWasFalling = false;
+    float AirborneElapsedSeconds = 0.0f;
+    float LandingRemainingSeconds = 0.0f;
 };
 
 /**
- * Uses Tripo-native clips exported on the same skeleton as the playable mesh.
- * This avoids the deformation caused by cross-skeleton retargeting.
+ * Temporary runtime fallback while the production Animation Blueprint is built.
+ * It uses either native clips or UE 5.8 clips retargeted to the playable
+ * skeleton; it never plays legacy assets for another skeleton.
  */
 UCLASS(Config=Game, DefaultConfig)
 class PRINCEANIMATIONRUNTIME_API UPrinceAnimationWorldSubsystem final : public UTickableWorldSubsystem
@@ -36,7 +40,7 @@ public:
 
 private:
     void RegisterPrince(AActor* Actor);
-    void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
+    void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared, float DeltaTime);
     void UpdatePlayerMovementSpeed(ACharacter& Character) const;
 
     UPROPERTY(Transient)
@@ -53,6 +57,12 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> JumpAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> FallAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> LandAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
