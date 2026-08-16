@@ -31,6 +31,7 @@ public:
 private:
     void RegisterPrince(AActor* Actor);
     void UpdatePrince(USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
+    void UpdatePlayerMovementSpeed(ACharacter& Character) const;
 
     UPROPERTY(Transient)
     TObjectPtr<USkeletalMesh> PrinceMesh;
@@ -40,6 +41,9 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> WalkAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> RunAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
