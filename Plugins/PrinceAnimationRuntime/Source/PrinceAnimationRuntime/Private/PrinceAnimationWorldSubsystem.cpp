@@ -16,8 +16,6 @@ namespace PrinceAnimationPaths
     constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripowalk.SK_POHPrince_NativeTripowalk");
     constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTriporun.SK_POHPrince_NativeTriporun");
     constexpr TCHAR Jump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripojump.SK_POHPrince_NativeTripojump");
-    constexpr TCHAR Dive[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/A_POH_NativeTripo_Divedive.A_POH_NativeTripo_Divedive");
-    constexpr TCHAR Fall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripofall.SK_POHPrince_NativeTripofall");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -34,8 +32,6 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
     RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
     JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
-    DiveAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Dive);
-    FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Fall);
 
     if (UWorld* World = GetWorld())
     {
@@ -62,7 +58,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
 void UPrinceAnimationWorldSubsystem::Tick(float)
 {
     UWorld* World = GetWorld();
-    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation || !DiveAnimation || !FallAnimation)
+    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation)
     {
         return;
     }
@@ -133,34 +129,17 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     if (Movement && Movement->IsFalling())
     {
-        const APlayerController* Controller = Cast<APlayerController>(Character.GetController());
-        const bool bForwardInputHeld = Controller && Controller->IsInputKeyDown(EKeys::W);
-        const bool bDiveInputHeld = bForwardInputHeld && Controller->IsInputKeyDown(EKeys::LeftShift);
-        if (!State.bWasAirborne)
-        {
-            State.bUseDive = bDiveInputHeld;
-            State.bWasAirborne = true;
-        }
-        else if (!State.bUseDive && bDiveInputHeld)
-        {
-            // The character may receive movement acceleration one frame after
-            // takeoff. Upgrade the rising clip as soon as that intent becomes
-            // measurable instead of leaving it on the standing jump.
-            State.bUseDive = true;
-        }
-        UAnimationAsset* Desired = Character.GetVelocity().Z > KINDA_SMALL_NUMBER
-            ? (State.bUseDive ? DiveAnimation : JumpAnimation)
-            : FallAnimation;
-        if (Active != Desired)
+        // The current Tripo "dive" and "fall" clips are complete actions,
+        // not transition-safe gameplay loops. Never play them here: holding the
+        // verified jump pose is stable until proper authored variants arrive.
+        if (Active != JumpAnimation)
         {
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
-            Mesh.PlayAnimation(Desired, Desired == FallAnimation);
-            Active = Desired;
+            Mesh.PlayAnimation(JumpAnimation, false);
+            Active = JumpAnimation;
         }
         return;
     }
-    State.bWasAirborne = false;
-    State.bUseDive = false;
 
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;
@@ -195,7 +174,7 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation && DiveAnimation && FallAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation;
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const

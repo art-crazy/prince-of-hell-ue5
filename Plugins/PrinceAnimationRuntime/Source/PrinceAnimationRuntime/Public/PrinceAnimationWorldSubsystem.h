@@ -15,8 +15,6 @@ class USkeletalMeshComponent;
 struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
-    bool bWasAirborne = false;
-    bool bUseDive = false;
 };
 
 /**
@@ -55,12 +53,6 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> JumpAnimation;
-
-    UPROPERTY(Transient)
-    TObjectPtr<UAnimationAsset> DiveAnimation;
-
-    UPROPERTY(Transient)
-    TObjectPtr<UAnimationAsset> FallAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
