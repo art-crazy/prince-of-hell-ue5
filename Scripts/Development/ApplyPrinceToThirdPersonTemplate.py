@@ -1,18 +1,22 @@
-"""Replace only the visual/animation layer of UE 5.8's ready Third Person pawn."""
+"""Apply Prince's correctly-oriented reference pose to UE's Third Person pawn.
+
+The first Game Animation Sample retarget pass is deliberately excluded: all of
+its tested clips rotate the Tripo skeleton onto the ground.  The base mesh is
+already Z-up, so an animation-free reference pose is the safe playable fallback
+until a dedicated IK Retargeter profile is authored.
+"""
 
 import unreal
 
 
 TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
-PRINCE_ANIM = "/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_ABP_Unarmed"
 
 
 character = unreal.load_asset(TEMPLATE_CHARACTER)
 mesh_asset = unreal.load_asset(PRINCE_MESH)
-anim_blueprint = unreal.load_asset(PRINCE_ANIM)
-if not character or not mesh_asset or not anim_blueprint:
-    raise RuntimeError("Template character, Prince mesh, or retargeted animation Blueprint is unavailable")
+if not character or not mesh_asset:
+    raise RuntimeError("Template character or Prince mesh is unavailable")
 
 cdo = unreal.get_default_object(character.generated_class())
 mesh = cdo.get_component_by_class(unreal.SkeletalMeshComponent)
@@ -24,8 +28,21 @@ mesh.set_editor_property("skeletal_mesh_asset", mesh_asset)
 mesh.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, -96.0))
 mesh.set_editor_property("relative_rotation", unreal.Rotator(0.0, -90.0, 0.0))
 mesh.set_editor_property("relative_scale3d", unreal.Vector(1.75, 1.75, 1.75))
-mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_BLUEPRINT)
-mesh.set_editor_property("anim_class", anim_blueprint.generated_class())
+# Do not assign any current POH retargeted clip here.  Their root bone rotates
+# this skeleton onto the ground; with no clip Unreal displays the mesh's Z-up
+# reference pose, which is the only verified correct orientation.
+mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_SINGLE_NODE)
+mesh.set_editor_property(
+    "animation_data",
+    unreal.SingleAnimationPlayData(
+        anim_to_play=None,
+        saved_looping=True,
+        saved_playing=True,
+        saved_position=0.0,
+        saved_play_rate=1.0,
+    ),
+)
+mesh.set_editor_property("anim_class", None)
 mesh.set_editor_property("owner_no_see", False)
 mesh.set_editor_property("hidden_in_game", False)
 
