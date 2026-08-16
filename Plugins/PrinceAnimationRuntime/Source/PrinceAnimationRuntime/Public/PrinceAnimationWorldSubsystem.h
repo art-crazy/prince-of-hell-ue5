@@ -32,8 +32,13 @@ private:
     void RegisterPrince(AActor* Actor);
     void UpdatePrince(USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
 
+    UPROPERTY(Transient)
     TObjectPtr<USkeletalMesh> PrinceMesh;
+
+    UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> IdleAnimation;
+
+    UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> WalkAnimation;
     FDelegateHandle ActorSpawnedHandle;
     TSet<TWeakObjectPtr<ACharacter>> PrinceCharacters;
