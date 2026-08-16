@@ -1,5 +1,7 @@
 """Fail-fast asset validation for the Prince third-person integration."""
 
+import math
+
 import unreal
 
 
@@ -32,6 +34,14 @@ if assigned_mesh != hero_mesh:
             assigned_mesh.get_path_name() if assigned_mesh else "None",
             hero_mesh.get_path_name(),
         )
+    )
+
+mesh_location = mesh_component.get_editor_property("relative_location")
+mesh_rotation = mesh_component.get_editor_property("relative_rotation")
+if not math.isclose(mesh_location.z, -96.0, abs_tol=0.01) or not math.isclose(mesh_rotation.yaw, -90.0, abs_tol=0.01):
+    raise RuntimeError(
+        "Prince character blueprint has an invalid mesh placement: location={}, rotation={}"
+        .format(mesh_location, mesh_rotation)
     )
 
 unreal.log_warning("POH VALIDATION PASSED: template character, Prince mesh and retarget assets are wired")

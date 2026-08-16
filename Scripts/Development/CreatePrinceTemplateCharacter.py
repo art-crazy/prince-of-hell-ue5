@@ -3,6 +3,8 @@ import unreal
 SOURCE_BLUEPRINT = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 TARGET_BLUEPRINT = "/Game/_Sandbox/Blueprints/BP_POHThirdPersonCharacter"
 HERO_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
+HERO_MESH_LOCATION = unreal.Vector(0.0, 0.0, -96.0)
+HERO_MESH_ROTATION = unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0)
 
 source = unreal.load_asset(SOURCE_BLUEPRINT)
 hero_mesh = unreal.load_asset(HERO_MESH)
@@ -22,6 +24,8 @@ if not mesh_component:
     raise RuntimeError("Template character has no skeletal mesh component")
 
 mesh_component.set_editor_property("skeletal_mesh_asset", hero_mesh)
+mesh_component.set_editor_property("relative_location", HERO_MESH_LOCATION)
+mesh_component.set_editor_property("relative_rotation", HERO_MESH_ROTATION)
 
 # Do not replace the template's input, camera, collision or animation state-machine here.
 # The retargeted Animation Blueprint is the next atomic change.
