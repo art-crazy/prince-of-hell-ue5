@@ -19,9 +19,11 @@ mesh = cdo.get_component_by_class(unreal.SkeletalMeshComponent)
 if not mesh:
     raise RuntimeError("Third Person template character has no skeletal mesh component")
 
-# The imported model is 100 cm high; the template uses a 192 cm capsule.
+# Native Tripo's skeletal root is already offset to the feet.  The template's
+# capsule origin is its centre, so the previous -96 cm legacy offset buried
+# roughly half of the character below the floor.
 mesh.set_editor_property("skeletal_mesh_asset", mesh_asset)
-mesh.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, -96.0))
+mesh.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, 0.0))
 # UE Python's positional Rotator arguments are roll, pitch, yaw.  Use keywords:
 # the former positional call assigned -90 degrees to pitch and laid Prince down.
 mesh.set_editor_property(
