@@ -12,7 +12,8 @@ namespace PrinceAnimationPaths
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig.SK_POHPrince_TripoRig");
     constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle.A_POH_Idle");
     constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF.A_POH_WalkF");
-    constexpr float WalkThreshold = 5.0f;
+    constexpr float StartWalkingSpeed = 10.0f;
+    constexpr float StopWalkingSpeed = 4.0f;
 }
 
 void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -21,6 +22,27 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     PrinceMesh = LoadObject<USkeletalMesh>(nullptr, PrinceAnimationPaths::Mesh);
     IdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Idle);
     WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
+
+    if (UWorld* World = GetWorld())
+    {
+        ActorSpawnedHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &UPrinceAnimationWorldSubsystem::RegisterPrince));
+        for (TActorIterator<ACharacter> It(World); It; ++It)
+        {
+            RegisterPrince(*It);
+        }
+    }
+}
+
+void UPrinceAnimationWorldSubsystem::Deinitialize()
+{
+    if (UWorld* World = GetWorld(); ActorSpawnedHandle.IsValid())
+    {
+        World->RemoveOnActorSpawnedHandler(ActorSpawnedHandle);
+    }
+
+    PrinceCharacters.Empty();
+    ActiveAnimations.Empty();
+    Super::Deinitialize();
 }
 
 void UPrinceAnimationWorldSubsystem::Tick(float)
@@ -39,23 +61,43 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
         }
     }
 
-    for (TActorIterator<ACharacter> It(World); It; ++It)
+    for (auto It = PrinceCharacters.CreateIterator(); It; ++It)
     {
-        ACharacter& Character = **It;
-        USkeletalMeshComponent* Mesh = Character.GetMesh();
-        if (!Mesh || Mesh->GetSkeletalMeshAsset() != PrinceMesh)
+        ACharacter* Character = It->Get();
+        if (!Character)
         {
+            It.RemoveCurrent();
             continue;
         }
 
-        UpdatePrince(*Mesh, Character.GetVelocity().SizeSquared2D());
+        if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+        {
+            UpdatePrince(*Mesh, Character->GetVelocity().SizeSquared2D());
+        }
+    }
+}
+
+void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
+{
+    ACharacter* Character = Cast<ACharacter>(Actor);
+    if (!Character)
+    {
+        return;
+    }
+
+    USkeletalMeshComponent* Mesh = Character->GetMesh();
+    if (Mesh && Mesh->GetSkeletalMeshAsset() == PrinceMesh)
+    {
+        PrinceCharacters.Add(Character);
     }
 }
 
 void UPrinceAnimationWorldSubsystem::UpdatePrince(USkeletalMeshComponent& Mesh, const float HorizontalSpeedSquared)
 {
-    UAnimationAsset* Desired = HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::WalkThreshold) ? WalkAnimation : IdleAnimation;
     TObjectPtr<UAnimationAsset>& Active = ActiveAnimations.FindOrAdd(&Mesh);
+    const bool bWasWalking = Active == WalkAnimation;
+    const float Threshold = bWasWalking ? PrinceAnimationPaths::StopWalkingSpeed : PrinceAnimationPaths::StartWalkingSpeed;
+    UAnimationAsset* Desired = HorizontalSpeedSquared >= FMath::Square(Threshold) ? WalkAnimation : IdleAnimation;
     if (Active == Desired)
     {
         return;
