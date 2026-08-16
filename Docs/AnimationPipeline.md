@@ -12,6 +12,11 @@ locomotion to the playable skeleton. The generated clips are stored in
 `NativeTripo/RetargetedManny` and are validated by
 `Scripts/Development/ValidateNativePrinceRetargeting.py`.
 
+They are currently **quarantined from runtime**: their package/skeleton links
+validate, but visual QA found the mesh disappearing when those clips play.
+Native Tripo clips remain the playable fallback until the retarget pose/root
+motion is corrected in the Retargeter editor.
+
 ## State policy
 
 - Idle and locomotion may loop.

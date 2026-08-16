@@ -16,8 +16,6 @@ struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
     bool bWasFalling = false;
-    float AirborneElapsedSeconds = 0.0f;
-    float LandingRemainingSeconds = 0.0f;
 };
 
 /**
@@ -40,7 +38,7 @@ public:
 
 private:
     void RegisterPrince(AActor* Actor);
-    void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared, float DeltaTime);
+    void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
     void UpdatePlayerMovementSpeed(ACharacter& Character) const;
 
     UPROPERTY(Transient)
@@ -57,12 +55,6 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> JumpAnimation;
-
-    UPROPERTY(Transient)
-    TObjectPtr<UAnimationAsset> FallAnimation;
-
-    UPROPERTY(Transient)
-    TObjectPtr<UAnimationAsset> LandAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
