@@ -133,14 +133,14 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     if (Movement && Movement->IsFalling())
     {
-        // The movement component is the authority for airborne state. Using its
-        // vertical velocity makes jumping and walking off an edge deterministic
-        // without carrying transient state between frames.
-        // Velocity can still be zero on the first airborne frame. Input is the
-        // reliable intent signal for selecting a moving jump versus a standing one.
-        const bool bMovingAtTakeoff = !Character.GetLastMovementInputVector().IsNearlyZero();
+        if (!State.bWasAirborne)
+        {
+            State.bUseDive = HorizontalSpeedSquared >= FMath::Square(PrinceAnimationPaths::StartWalkingSpeed)
+                || !Character.GetLastMovementInputVector().IsNearlyZero();
+            State.bWasAirborne = true;
+        }
         UAnimationAsset* Desired = Character.GetVelocity().Z > KINDA_SMALL_NUMBER
-            ? (bMovingAtTakeoff ? DiveAnimation : JumpAnimation)
+            ? (State.bUseDive ? DiveAnimation : JumpAnimation)
             : FallAnimation;
         if (Active != Desired)
         {
@@ -150,6 +150,8 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
         }
         return;
     }
+    State.bWasAirborne = false;
+    State.bUseDive = false;
 
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;

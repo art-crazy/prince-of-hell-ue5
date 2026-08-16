@@ -15,6 +15,8 @@ class USkeletalMeshComponent;
 struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
+    bool bWasAirborne = false;
+    bool bUseDive = false;
 };
 
 /**
