@@ -5,7 +5,6 @@
 #include "Engine/SkeletalMesh.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
-#include "PrinceAnimationRuntimeModule.h"
 
 namespace PrinceAnimationPaths
 {
