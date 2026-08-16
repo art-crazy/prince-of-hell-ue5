@@ -20,6 +20,9 @@ if not mesh:
     raise RuntimeError("Prince character has no skeletal mesh component")
 if mesh.get_editor_property("skeletal_mesh_asset") != expected_mesh:
     raise RuntimeError("Prince mesh is not assigned to the playable character")
+rotation = mesh.get_editor_property("relative_rotation")
+if abs(rotation.pitch) > 0.01 or abs(rotation.yaw + 90.0) > 0.01 or abs(rotation.roll) > 0.01:
+    raise RuntimeError("Prince mesh rotation is not the validated upright orientation")
 if mesh.get_editor_property("animation_mode") != unreal.AnimationMode.ANIMATION_SINGLE_NODE:
     raise RuntimeError("Prince must use the orientation-safe reference pose")
 if mesh.get_editor_property("animation_data").anim_to_play is not None:

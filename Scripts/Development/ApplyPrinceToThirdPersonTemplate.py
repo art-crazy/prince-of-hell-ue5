@@ -26,7 +26,12 @@ if not mesh:
 # The imported model is 100 cm high; the template uses a 192 cm capsule.
 mesh.set_editor_property("skeletal_mesh_asset", mesh_asset)
 mesh.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, -96.0))
-mesh.set_editor_property("relative_rotation", unreal.Rotator(0.0, -90.0, 0.0))
+# UE Python's positional Rotator arguments are roll, pitch, yaw.  Use keywords:
+# the former positional call assigned -90 degrees to pitch and laid Prince down.
+mesh.set_editor_property(
+    "relative_rotation",
+    unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0),
+)
 mesh.set_editor_property("relative_scale3d", unreal.Vector(1.75, 1.75, 1.75))
 # Do not assign any current POH retargeted clip here.  Their root bone rotates
 # this skeleton onto the ground; with no clip Unreal displays the mesh's Z-up
