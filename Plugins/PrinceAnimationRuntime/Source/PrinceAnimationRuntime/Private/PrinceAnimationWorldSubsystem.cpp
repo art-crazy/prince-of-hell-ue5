@@ -15,6 +15,9 @@ namespace PrinceAnimationPaths
     constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle.A_POH_Idle");
     constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF.A_POH_WalkF");
     constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_RunF.A_POH_RunF");
+    constexpr TCHAR Jump[] = TEXT("/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_MM_Jump.POH_MM_Jump");
+    constexpr TCHAR Fall[] = TEXT("/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_MM_Fall_Loop.POH_MM_Fall_Loop");
+    constexpr TCHAR Land[] = TEXT("/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_MM_Land.POH_MM_Land");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -30,6 +33,9 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     IdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Idle);
     WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
     RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
+    JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Fall);
+    LandAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Land);
 
     if (UWorld* World = GetWorld())
     {
@@ -50,18 +56,36 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
 
     PrinceCharacters.Empty();
     ActiveAnimations.Empty();
+    FallingStates.Empty();
+    LandingAnimationEndTimes.Empty();
     Super::Deinitialize();
 }
 
 void UPrinceAnimationWorldSubsystem::Tick(float)
 {
     UWorld* World = GetWorld();
-    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation)
+    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation || !FallAnimation || !LandAnimation)
     {
         return;
     }
 
     for (auto It = ActiveAnimations.CreateIterator(); It; ++It)
+    {
+        if (!It.Key().IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
+
+    for (auto It = FallingStates.CreateIterator(); It; ++It)
+    {
+        if (!It.Key().IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
+
+    for (auto It = LandingAnimationEndTimes.CreateIterator(); It; ++It)
     {
         if (!It.Key().IsValid())
         {
@@ -81,7 +105,7 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
         if (USkeletalMeshComponent* Mesh = Character->GetMesh())
         {
             UpdatePlayerMovementSpeed(*Character);
-            UpdatePrince(*Mesh, Character->GetVelocity().SizeSquared2D());
+            UpdatePrince(*Character, *Mesh, Character->GetVelocity().SizeSquared2D());
         }
     }
 }
@@ -120,9 +144,47 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
     }
 }
 
-void UPrinceAnimationWorldSubsystem::UpdatePrince(USkeletalMeshComponent& Mesh, const float HorizontalSpeedSquared)
+void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, const float HorizontalSpeedSquared)
 {
     TObjectPtr<UAnimationAsset>& Active = ActiveAnimations.FindOrAdd(&Mesh);
+    const float WorldTime = GetWorld()->GetTimeSeconds();
+    const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
+    const bool bIsFalling = Movement && Movement->IsFalling();
+    const bool bWasFalling = FallingStates.FindRef(&Mesh);
+
+    if (bIsFalling)
+    {
+        LandingAnimationEndTimes.Remove(&Mesh);
+        UAnimationAsset* Desired = bWasFalling && Character.GetVelocity().Z <= 0.0f ? FallAnimation : JumpAnimation;
+        if (Active != Desired)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(Desired, Desired == FallAnimation);
+            Active = Desired;
+        }
+        FallingStates.Add(&Mesh, true);
+        return;
+    }
+
+    FallingStates.Add(&Mesh, false);
+    if (bWasFalling)
+    {
+        Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+        Mesh.PlayAnimation(LandAnimation, false);
+        Active = LandAnimation;
+        LandingAnimationEndTimes.Add(&Mesh, WorldTime + LandAnimation->GetPlayLength());
+        return;
+    }
+
+    if (const float* LandEndTime = LandingAnimationEndTimes.Find(&Mesh))
+    {
+        if (WorldTime < *LandEndTime)
+        {
+            return;
+        }
+        LandingAnimationEndTimes.Remove(&Mesh);
+    }
+
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;
     if (HorizontalSpeedSquared >= FMath::Square(RunThreshold))
@@ -156,7 +218,7 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation && FallAnimation && LandAnimation;
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const

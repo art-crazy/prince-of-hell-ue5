@@ -30,7 +30,7 @@ public:
 
 private:
     void RegisterPrince(AActor* Actor);
-    void UpdatePrince(USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
+    void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
     void UpdatePlayerMovementSpeed(ACharacter& Character) const;
 
     UPROPERTY(Transient)
@@ -45,10 +45,21 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> RunAnimation;
 
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> JumpAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> FallAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> LandAnimation;
+
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
     bool bEnableRuntimeLocomotion = true;
     FDelegateHandle ActorSpawnedHandle;
     TSet<TWeakObjectPtr<ACharacter>> PrinceCharacters;
     TMap<TWeakObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, bool> FallingStates;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, float> LandingAnimationEndTimes;
 };
