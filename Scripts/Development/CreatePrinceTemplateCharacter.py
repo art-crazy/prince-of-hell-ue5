@@ -6,6 +6,10 @@ HERO_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
 HERO_ANIM_BLUEPRINT = "/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_ABP_Unarmed"
 HERO_MESH_LOCATION = unreal.Vector(0.0, 0.0, -96.0)
 HERO_MESH_ROTATION = unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0)
+# Tripo's imported character is 100 cm tall, while the UE third-person
+# capsule is 192 cm.  This scale keeps the feet on the capsule base and
+# fills the same readable framing as the template mannequin.
+HERO_MESH_SCALE = unreal.Vector(1.75, 1.75, 1.75)
 
 source = unreal.load_asset(SOURCE_BLUEPRINT)
 hero_mesh = unreal.load_asset(HERO_MESH)
@@ -28,6 +32,7 @@ if not mesh_component:
 mesh_component.set_editor_property("skeletal_mesh_asset", hero_mesh)
 mesh_component.set_editor_property("relative_location", HERO_MESH_LOCATION)
 mesh_component.set_editor_property("relative_rotation", HERO_MESH_ROTATION)
+mesh_component.set_editor_property("relative_scale3d", HERO_MESH_SCALE)
 mesh_component.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_BLUEPRINT)
 mesh_component.set_editor_property("anim_class", hero_anim_blueprint.generated_class())
 

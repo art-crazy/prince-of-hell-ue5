@@ -19,7 +19,15 @@ if not game_mode:
     raise RuntimeError("Could not create Prince template game mode")
 
 game_mode_cdo = unreal.get_default_object(game_mode.generated_class())
+source_cdo = unreal.get_default_object(source.generated_class())
 game_mode_cdo.set_editor_property("default_pawn_class", character.generated_class())
+# UE 5.8's Third Person template owns its camera graph in a custom player
+# controller.  Keep it when substituting only the pawn; otherwise PIE falls
+# back to an unframed default view.
+game_mode_cdo.set_editor_property(
+    "player_controller_class",
+    source_cdo.get_editor_property("player_controller_class"),
+)
 
 unreal.BlueprintEditorLibrary.compile_blueprint(game_mode)
 if not unreal.EditorAssetLibrary.save_asset(TARGET_GAME_MODE, only_if_is_dirty=False):

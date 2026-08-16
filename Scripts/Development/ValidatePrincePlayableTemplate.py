@@ -10,8 +10,8 @@ def load(path):
     return asset
 
 
-character = load("/Game/_Sandbox/Blueprints/BP_POHThirdPersonCharacter")
-game_mode = load("/Game/_Sandbox/Blueprints/BP_POHThirdPersonGameMode")
+character = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter")
+game_mode = load("/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode")
 expected_mesh = load("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig")
 expected_anim = load("/Game/_Sandbox/Animation/RetargetedTemplateAligned/POH_ABP_Unarmed")
 
@@ -26,6 +26,12 @@ if mesh.get_editor_property("anim_class") != expected_anim.generated_class():
 
 game_mode_cdo = unreal.get_default_object(game_mode.generated_class())
 if game_mode_cdo.get_editor_property("default_pawn_class") != character.generated_class():
-    raise RuntimeError("Prince character is not the game mode default pawn")
+    raise RuntimeError("The UE third-person game mode does not use its Prince-updated template pawn")
+
+if not unreal.EditorLoadingAndSavingUtils.load_map("/Game/ThirdPerson/Lvl_ThirdPerson"):
+    raise RuntimeError("Could not load template map for validation")
+map_game_mode = unreal.EditorLevelLibrary.get_editor_world().get_world_settings().get_editor_property("default_game_mode")
+if map_game_mode != game_mode.generated_class():
+    raise RuntimeError("Template map override does not use the UE third-person game mode")
 
 unreal.log_warning("POH PLAYABLE TEMPLATE VALIDATION PASSED")
