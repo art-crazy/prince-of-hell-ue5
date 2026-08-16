@@ -7,6 +7,9 @@ TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo"
 PRINCE_ANIMATION = "/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripoidle"
 TARGET_VISUAL_HEIGHT_CM = 175.0
+# Imported bounds can include dangling cloth below the soles.  A tiny overlap is
+# preferable to visible hovering and remains safely inside the floor collision.
+VISUAL_SOLE_OVERLAP_CM = 3.0
 
 
 def calculate_mesh_placement(mesh_asset, capsule):
@@ -22,7 +25,7 @@ def calculate_mesh_placement(mesh_asset, capsule):
     capsule_half_height = capsule.get_editor_property("capsule_half_height")
     # Character origin is capsule centre; move the mesh so its scaled minimum
     # touches the capsule bottom, i.e. the walkable floor.
-    location_z = -capsule_half_height - minimum_z * scale
+    location_z = -capsule_half_height - minimum_z * scale - VISUAL_SOLE_OVERLAP_CM
     return location_z, scale
 
 
