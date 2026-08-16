@@ -15,12 +15,12 @@ class USkeletalMeshComponent;
 struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
+    bool bWasFalling = false;
 };
 
 /**
- * Uses only individually validated locomotion clips while the dedicated IK
- * retargeter is rebuilt. Airborne clips are intentionally excluded because
- * skeleton compatibility alone does not guarantee deformation-safe retargeting.
+ * Uses Tripo-native clips exported on the same skeleton as the playable mesh.
+ * This avoids the deformation caused by cross-skeleton retargeting.
  */
 UCLASS(Config=Game, DefaultConfig)
 class PRINCEANIMATIONRUNTIME_API UPrinceAnimationWorldSubsystem final : public UTickableWorldSubsystem
@@ -51,6 +51,12 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> RunAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> JumpAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> FallAnimation;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")

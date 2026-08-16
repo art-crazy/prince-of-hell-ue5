@@ -1,11 +1,11 @@
-"""Apply Prince visuals and the currently validated single animation to UE's pawn."""
+"""Apply the validated native Tripo Prince mesh and idle clip to UE's pawn."""
 
 import unreal
 
 
 TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
-PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
-PRINCE_ANIMATION = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle"
+PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo"
+PRINCE_ANIMATION = "/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripoidle"
 
 
 character = unreal.load_asset(TEMPLATE_CHARACTER)

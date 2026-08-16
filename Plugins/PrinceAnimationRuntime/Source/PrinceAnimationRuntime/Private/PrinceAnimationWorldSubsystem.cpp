@@ -11,10 +11,12 @@
 
 namespace PrinceAnimationPaths
 {
-    constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig.SK_POHPrince_TripoRig");
-    constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle.A_POH_Idle");
-    constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF.A_POH_WalkF");
-    constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_RunF.A_POH_RunF");
+    constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
+    constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripoidle.SK_POHPrince_NativeTripoidle");
+    constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripowalk.SK_POHPrince_NativeTripowalk");
+    constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTriporun.SK_POHPrince_NativeTriporun");
+    constexpr TCHAR Jump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripojump.SK_POHPrince_NativeTripojump");
+    constexpr TCHAR Fall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripofall.SK_POHPrince_NativeTripofall");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -30,6 +32,8 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     IdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Idle);
     WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
     RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
+    JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Fall);
 
     if (UWorld* World = GetWorld())
     {
@@ -56,7 +60,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
 void UPrinceAnimationWorldSubsystem::Tick(float)
 {
     UWorld* World = GetWorld();
-    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation)
+    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation || !FallAnimation)
     {
         return;
     }
@@ -125,13 +129,21 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     FPrinceAnimationState& State = AnimationStates.FindOrAdd(&Mesh);
     TObjectPtr<UAnimationAsset>& Active = State.ActiveAnimation;
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
-    // The old bulk-retargeted airborne clips can deform this skeleton. Hold
-    // the last known-safe locomotion pose in air until a proper IK retarget
-    // profile is authored and visually approved.
     if (Movement && Movement->IsFalling())
     {
+        UAnimationAsset* Desired = State.bWasFalling && Character.GetVelocity().Z <= 0.0f
+            ? FallAnimation
+            : JumpAnimation;
+        if (Active != Desired)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(Desired, Desired == FallAnimation);
+            Active = Desired;
+        }
+        State.bWasFalling = true;
         return;
     }
+    State.bWasFalling = false;
 
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;
@@ -166,7 +178,7 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation && FallAnimation;
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
