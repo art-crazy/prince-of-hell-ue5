@@ -1,0 +1,15 @@
+# Unreal Engine generated state
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.suo
+*.user
+*.userprefs
+Thumbs.db
+Desktop.ini
