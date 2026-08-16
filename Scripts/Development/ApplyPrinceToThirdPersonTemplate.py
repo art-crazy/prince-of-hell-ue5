@@ -1,22 +1,18 @@
-"""Apply Prince's correctly-oriented reference pose to UE's Third Person pawn.
-
-The first Game Animation Sample retarget pass is deliberately excluded: all of
-its tested clips rotate the Tripo skeleton onto the ground.  The base mesh is
-already Z-up, so an animation-free reference pose is the safe playable fallback
-until a dedicated IK Retargeter profile is authored.
-"""
+"""Apply Prince visuals and the individually verified idle animation to UE's pawn."""
 
 import unreal
 
 
 TEMPLATE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 PRINCE_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig"
+PRINCE_IDLE = "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle"
 
 
 character = unreal.load_asset(TEMPLATE_CHARACTER)
 mesh_asset = unreal.load_asset(PRINCE_MESH)
-if not character or not mesh_asset:
-    raise RuntimeError("Template character or Prince mesh is unavailable")
+idle_animation = unreal.load_asset(PRINCE_IDLE)
+if not character or not mesh_asset or not idle_animation:
+    raise RuntimeError("Template character, Prince mesh, or idle animation is unavailable")
 
 cdo = unreal.get_default_object(character.generated_class())
 mesh = cdo.get_component_by_class(unreal.SkeletalMeshComponent)
@@ -33,14 +29,11 @@ mesh.set_editor_property(
     unreal.Rotator(pitch=0.0, yaw=-90.0, roll=0.0),
 )
 mesh.set_editor_property("relative_scale3d", unreal.Vector(1.75, 1.75, 1.75))
-# Do not assign any current POH retargeted clip here.  Their root bone rotates
-# this skeleton onto the ground; with no clip Unreal displays the mesh's Z-up
-# reference pose, which is the only verified correct orientation.
 mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_SINGLE_NODE)
 mesh.set_editor_property(
     "animation_data",
     unreal.SingleAnimationPlayData(
-        anim_to_play=None,
+        anim_to_play=idle_animation,
         saved_looping=True,
         saved_playing=True,
         saved_position=0.0,
