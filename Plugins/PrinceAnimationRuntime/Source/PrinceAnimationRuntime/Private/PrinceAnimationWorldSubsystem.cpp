@@ -115,7 +115,7 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return PrinceMesh && IdleAnimation && WalkAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation;
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const

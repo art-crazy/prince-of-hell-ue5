@@ -15,7 +15,7 @@ class USkeletalMeshComponent;
  * Uses only individually validated clips while the dedicated IK retargeter is
  * being rebuilt. This avoids the incompatible Control Rig in the bulk export.
  */
-UCLASS()
+UCLASS(Config=Game, DefaultConfig)
 class PRINCEANIMATIONRUNTIME_API UPrinceAnimationWorldSubsystem final : public UTickableWorldSubsystem
 {
     GENERATED_BODY()
@@ -40,6 +40,10 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> WalkAnimation;
+
+    /** Allows isolated clip QA without modifying runtime source code. */
+    UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")
+    bool bEnableRuntimeLocomotion = true;
     FDelegateHandle ActorSpawnedHandle;
     TSet<TWeakObjectPtr<ACharacter>> PrinceCharacters;
     TMap<TWeakObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
