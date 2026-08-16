@@ -6,6 +6,7 @@
 #include "PrinceAnimationWorldSubsystem.generated.h"
 
 class UAnimationAsset;
+class USkeletalMesh;
 class USkeletalMeshComponent;
 
 /**
@@ -21,12 +22,14 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Tick(float DeltaTime) override;
     virtual TStatId GetStatId() const override;
-    virtual bool IsTickable() const override { return true; }
+    virtual bool IsTickable() const override;
+    virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 private:
     void UpdatePrince(USkeletalMeshComponent& Mesh, float HorizontalSpeed);
 
+    TObjectPtr<USkeletalMesh> PrinceMesh;
     TObjectPtr<UAnimationAsset> IdleAnimation;
     TObjectPtr<UAnimationAsset> WalkAnimation;
-    TMap<TObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
 };
