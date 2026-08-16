@@ -135,15 +135,15 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     {
         State.bWasFalling = true;
         State.AirborneElapsedSeconds += DeltaTime;
-        const UAnimationAsset* Desired = State.AirborneElapsedSeconds < JumpAnimation->GetPlayLength()
+        UAnimationAsset* Desired = State.AirborneElapsedSeconds < JumpAnimation->GetPlayLength()
             ? JumpAnimation.Get()
             : FallAnimation.Get();
         const bool bLoop = Desired == FallAnimation;
         if (Active != Desired)
         {
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
-            Mesh.PlayAnimation(const_cast<UAnimationAsset*>(Desired), bLoop);
-            Active = const_cast<UAnimationAsset*>(Desired);
+            Mesh.PlayAnimation(Desired, bLoop);
+            Active = Desired;
         }
         return;
     }
