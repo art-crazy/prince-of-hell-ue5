@@ -11,6 +11,14 @@ class ACharacter;
 class USkeletalMesh;
 class USkeletalMeshComponent;
 
+/** Runtime state belongs to one mesh and is pruned when that mesh is destroyed. */
+struct FPrinceAnimationState
+{
+    TObjectPtr<UAnimationAsset> ActiveAnimation;
+    bool bWasFalling = false;
+    float LandingAnimationEndTime = 0.0f;
+};
+
 /**
  * Uses only individually validated clips while the dedicated IK retargeter is
  * being rebuilt. This avoids the incompatible Control Rig in the bulk export.
@@ -59,7 +67,5 @@ private:
     bool bEnableRuntimeLocomotion = true;
     FDelegateHandle ActorSpawnedHandle;
     TSet<TWeakObjectPtr<ACharacter>> PrinceCharacters;
-    TMap<TWeakObjectPtr<USkeletalMeshComponent>, TObjectPtr<UAnimationAsset>> ActiveAnimations;
-    TMap<TWeakObjectPtr<USkeletalMeshComponent>, bool> FallingStates;
-    TMap<TWeakObjectPtr<USkeletalMeshComponent>, float> LandingAnimationEndTimes;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, FPrinceAnimationState> AnimationStates;
 };

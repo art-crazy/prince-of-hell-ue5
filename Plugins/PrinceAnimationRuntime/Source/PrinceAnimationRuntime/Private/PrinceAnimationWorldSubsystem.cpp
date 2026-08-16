@@ -55,9 +55,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
     }
 
     PrinceCharacters.Empty();
-    ActiveAnimations.Empty();
-    FallingStates.Empty();
-    LandingAnimationEndTimes.Empty();
+    AnimationStates.Empty();
     Super::Deinitialize();
 }
 
@@ -69,23 +67,7 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
         return;
     }
 
-    for (auto It = ActiveAnimations.CreateIterator(); It; ++It)
-    {
-        if (!It.Key().IsValid())
-        {
-            It.RemoveCurrent();
-        }
-    }
-
-    for (auto It = FallingStates.CreateIterator(); It; ++It)
-    {
-        if (!It.Key().IsValid())
-        {
-            It.RemoveCurrent();
-        }
-    }
-
-    for (auto It = LandingAnimationEndTimes.CreateIterator(); It; ++It)
+    for (auto It = AnimationStates.CreateIterator(); It; ++It)
     {
         if (!It.Key().IsValid())
         {
@@ -146,15 +128,16 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
 
 void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, const float HorizontalSpeedSquared)
 {
-    TObjectPtr<UAnimationAsset>& Active = ActiveAnimations.FindOrAdd(&Mesh);
+    FPrinceAnimationState& State = AnimationStates.FindOrAdd(&Mesh);
+    TObjectPtr<UAnimationAsset>& Active = State.ActiveAnimation;
     const float WorldTime = GetWorld()->GetTimeSeconds();
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     const bool bIsFalling = Movement && Movement->IsFalling();
-    const bool bWasFalling = FallingStates.FindRef(&Mesh);
+    const bool bWasFalling = State.bWasFalling;
 
     if (bIsFalling)
     {
-        LandingAnimationEndTimes.Remove(&Mesh);
+        State.LandingAnimationEndTime = 0.0f;
         UAnimationAsset* Desired = bWasFalling && Character.GetVelocity().Z <= 0.0f ? FallAnimation : JumpAnimation;
         if (Active != Desired)
         {
@@ -162,28 +145,25 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
             Mesh.PlayAnimation(Desired, Desired == FallAnimation);
             Active = Desired;
         }
-        FallingStates.Add(&Mesh, true);
+        State.bWasFalling = true;
         return;
     }
 
-    FallingStates.Add(&Mesh, false);
+    State.bWasFalling = false;
     if (bWasFalling)
     {
         Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
         Mesh.PlayAnimation(LandAnimation, false);
         Active = LandAnimation;
-        LandingAnimationEndTimes.Add(&Mesh, WorldTime + LandAnimation->GetPlayLength());
+        State.LandingAnimationEndTime = WorldTime + LandAnimation->GetPlayLength();
         return;
     }
 
-    if (const float* LandEndTime = LandingAnimationEndTimes.Find(&Mesh))
+    if (WorldTime < State.LandingAnimationEndTime)
     {
-        if (WorldTime < *LandEndTime)
-        {
-            return;
-        }
-        LandingAnimationEndTimes.Remove(&Mesh);
+        return;
     }
+    State.LandingAnimationEndTime = 0.0f;
 
     const bool bWasRunning = Active == RunAnimation;
     const float RunThreshold = bWasRunning ? PrinceAnimationPaths::StopRunningSpeed : PrinceAnimationPaths::StartRunningSpeed;
