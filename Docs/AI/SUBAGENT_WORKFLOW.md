@@ -69,3 +69,5 @@
 - `terra`: подготовить Unreal Python smoke-test, который загружает Prince assets, retargeter и playable Blueprint; не открывает и не сохраняет карты.
 
 Главный агент после этого единолично назначает `BP_POHThirdPersonCharacter` default pawn только после успешного animation smoke-test. Это не позволяет сломать уже работающие камеру, ввод и коллизии шаблона.
+
+Базовую целостность уже созданной связки проверяет `Scripts/Development/ValidatePrinceTemplateIntegration.py`; он запускается через `UnrealEditor-Cmd -run=pythonscript` и не изменяет ассеты.
