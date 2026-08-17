@@ -48,16 +48,28 @@ def main() -> None:
     if not meshes:
         raise RuntimeError("The source FBX contains no mesh objects")
 
+    source_mesh = meshes[0]
+    source_matrix = source_mesh.matrix_world.copy()
+    clean_mesh_data = source_mesh.data.copy()
+    clean_mesh_data.name = "POH_Warrior_StaticForAccuRig_Mesh"
+
+    # Rebuild the scene around a newly copied mesh datablock.  Removing helper
+    # objects from an imported FBX is insufficient because Blender's FBX
+    # exporter can retain source nodes; a new scene guarantees one character
+    # object is written to the AccuRIG input.
+    for item in list(bpy.context.scene.objects):
+        bpy.data.objects.remove(item, do_unlink=True)
+    clean_mesh = bpy.data.objects.new("POH_Warrior_StaticForAccuRig", clean_mesh_data)
+    bpy.context.scene.collection.objects.link(clean_mesh)
+    clean_mesh.matrix_world = source_matrix
+    meshes = [clean_mesh]
+
     for mesh in meshes:
         mesh.parent = None
         for modifier in list(mesh.modifiers):
             mesh.modifiers.remove(modifier)
         mesh.vertex_groups.clear()
         mesh.animation_data_clear()
-
-    for item in list(bpy.context.scene.objects):
-        if item not in meshes:
-            bpy.data.objects.remove(item, do_unlink=True)
 
     bpy.ops.object.select_all(action="DESELECT")
     for mesh in meshes:
