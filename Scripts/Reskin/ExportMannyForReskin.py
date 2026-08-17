@@ -8,22 +8,35 @@ import os
 import unreal
 
 
-MESH_PATH = "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple"
+MESH_PATH = "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"
 OUTPUT = r"C:\Users\artcr\Documents\Unreal Projects\test\Saved\ReskinPipeline\Manny_ExactUE58.fbx"
 
-mesh = unreal.load_asset(MESH_PATH)
-if not mesh:
-    raise RuntimeError("Manny skeletal mesh is unavailable")
-os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-task = unreal.AssetExportTask()
-task.object = mesh
-task.filename = OUTPUT
-task.automated = True
-task.replace_identical = True
-task.prompt = False
-task.exporter = unreal.SkeletalMeshExporterFBX()
-if not unreal.Exporter.run_asset_export_task(task):
-    raise RuntimeError("Manny FBX export failed")
-if not os.path.exists(OUTPUT) or os.path.getsize(OUTPUT) < 1024:
-    raise RuntimeError("Manny FBX export produced no usable file")
-unreal.log_warning("POH_MANNY_EXACT_EXPORT PASS {} bytes={}".format(OUTPUT, os.path.getsize(OUTPUT)))
+try:
+    # Python commandlets start before the asynchronous asset scan has completed.
+    # Scan this known project path explicitly so the exporter can resolve Manny.
+    unreal.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous(
+        ["/Game/Characters/Mannequins/Meshes"], True
+    )
+    mesh = unreal.load_asset(MESH_PATH)
+    if not mesh:
+        raise RuntimeError("Manny skeletal mesh is unavailable")
+    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
+    task = unreal.AssetExportTask()
+    task.object = mesh
+    task.filename = OUTPUT
+    task.automated = True
+    task.replace_identical = True
+    task.prompt = False
+    task.exporter = unreal.SkeletalMeshExporterFBX()
+    if not unreal.Exporter.run_asset_export_task(task):
+        raise RuntimeError("Manny FBX export failed")
+    if not os.path.exists(OUTPUT) or os.path.getsize(OUTPUT) < 1024:
+        raise RuntimeError("Manny FBX export produced no usable file")
+    unreal.log_warning("POH_MANNY_EXACT_EXPORT PASS {} bytes={}".format(OUTPUT, os.path.getsize(OUTPUT)))
+except Exception as error:
+    unreal.log_error("POH_MANNY_EXACT_EXPORT FAILURE {}".format(error))
+    raise
+finally:
+    # Normal editor execution has a valid rendering context for FBX export;
+    # close it once the one-shot task completes.
+    unreal.SystemLibrary.quit_editor()

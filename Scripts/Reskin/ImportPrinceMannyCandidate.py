@@ -7,9 +7,9 @@ run after BuildPrinceMannyCandidate.ps1 succeeds.
 import unreal
 
 
-SOURCE = r"C:\Users\artcr\Documents\Unreal Projects\test\Saved\ReskinPipeline\POH_Prince_MannyCandidate.fbx"
-DESTINATION = "/Game/_Sandbox/Characters/PrinceOfHell/MannyCandidate"
-NAME = "SK_POHPrince_MannyCandidate"
+SOURCE = globals().get("SOURCE", r"C:\Users\artcr\Documents\Unreal Projects\test\Saved\ReskinPipeline\POH_Prince_MannyCandidate.fbx")
+DESTINATION = globals().get("DESTINATION", "/Game/_Sandbox/Characters/PrinceOfHell/MannyCandidate")
+NAME = globals().get("NAME", "SK_POHPrince_MannyCandidate")
 MANNY_SKELETON = "/Game/Characters/Mannequins/Meshes/SK_Mannequin"
 
 
