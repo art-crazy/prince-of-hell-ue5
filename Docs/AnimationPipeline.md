@@ -7,6 +7,15 @@ target for gameplay animation. Do not use assets below `TripoRig` or
 `RetargetedTemplateAligned`: they target an obsolete skeleton and their
 Animation Blueprint has Control Rig hierarchy errors.
 
+## UE5-retargetable warrior candidate
+
+The user-supplied `SK_Warrior_UE5_Retargetable.fbx` is imported separately as
+`SK_POHPrince_UE5Retargetable`. Its conventional humanoid bone names are
+configured in `IK_POHPrince_UE5Retargetable`; the paired retargeter is
+`RTG_Manny_To_POH_UE5Retargetable`. The first isolated UE 5.8 validation clip
+is `UE58_IKQA_MM_Idle`. It is not connected to runtime until visual QA accepts
+the mesh and its idle pose.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
