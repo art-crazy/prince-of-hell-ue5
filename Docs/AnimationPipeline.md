@@ -23,6 +23,29 @@ with IKRig, so this candidate stays quarantined. Re-rig the static mesh through
 AccuRIG (or equivalent) and validate the exported FBX first with
 `Scripts/Development/AuditFbxSkinWeights.py`.
 
+## AccuRIG rebuild (required before new UE animation work)
+
+The clean AccuRIG input is generated, never edited in place:
+`Saved/AccuRig/POH_Warrior_StaticForAccuRig.fbx`. Generate it again from a new
+Tripo export with:
+
+```text
+Blender 5.2\blender.exe --background --python Scripts/Development/PrepareStaticMeshForAccuRig.py -- <source.fbx> Saved/AccuRig/POH_Warrior_StaticForAccuRig.fbx
+```
+
+The preparation script preserves the source FBX and materials but intentionally
+strips its armature and all vertex weights. In AccuRIG: import this file, put
+the character in a neutral A/T pose, place the body guides precisely at hips,
+knees, ankles, shoulders, elbows, wrists, spine and head, then use **Generate
+Skeleton** and **Bind Skin**. Test with AccuRIG's included motion before export.
+
+The disconnected telekinetic hand is an intentional Prince feature. Keep it
+out of the humanoid body guides and treat it as a separate accessory/socket
+after export; it must not pull the arm chain's skin weights. Export an Unreal
+FBX, run `AuditFbxSkinWeights.py` on it, and import it into a new isolated UE
+candidate. Only then create a Manny-to-Prince IK Rig / IK Retargeter and QA one
+idle animation before any locomotion is connected.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
