@@ -57,9 +57,19 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> JumpAnimation;
 
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> FallAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> LandAnimation;
+
     // The Manny candidate is intentionally restricted to a single idle clip
     // while its bind pose and skinning are diagnosed.
     bool bMannyCandidateMode = false;
+
+    /** AccuRIG is the validated UE-compatible candidate; it may use the full
+     *  retargeted UE 5.8 locomotion set without touching the fallback mesh. */
+    bool bAccuRigCandidateMode = false;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")

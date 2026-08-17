@@ -89,6 +89,16 @@ small batches with the same retargeter. If it fails, keep this evidence and
 adjust the IK Retargeter pose/chains; do not modify the mesh in Blender or
 reintroduce direct Manny assignment.
 
+The idle passed visual QA. The candidate now also has UE 5.8 directional
+walk/jog clips, its idle/walk/run blend space, jump, falling and landing in
+`RetargetedUE58_ABP`. UE's batch tool preserved the authored motion set but
+does not export an Animation Blueprint asset; `PrinceAnimationRuntime`
+therefore has an opt-in profile (`poh.AnimationProfile=2`) which selects the
+approved clips while a production graph is assembled. It derives scale and
+ground contact from the imported mesh bounds, so it has no model-specific
+height offset. Profile `0` remains the existing NativeTripo fallback; profile
+`1` is retired direct-Manny diagnosis and must not be used.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is

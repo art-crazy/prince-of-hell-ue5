@@ -2,6 +2,7 @@
 
 #include "Animation/AnimationAsset.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -12,10 +13,10 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogPrinceAnimation, Log, All);
 
-static TAutoConsoleVariable<int32> CVarPrinceUseMannyCandidate(
-    TEXT("poh.UseMannyCandidate"),
+static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
+    TEXT("poh.AnimationProfile"),
     0,
-    TEXT("Use the isolated UE Manny-skeleton Prince candidate. 0 = stable Tripo fallback, 1 = direct UE 5.8 animation verification."),
+    TEXT("Prince animation profile. 0 = stable native Tripo fallback; 1 = retired direct-Manny diagnostic; 2 = isolated AccuRIG + UE5.8 IK retarget."),
     ECVF_Default);
 
 namespace PrinceAnimationPaths
@@ -32,28 +33,50 @@ namespace PrinceAnimationPaths
     constexpr TCHAR CandidateWalk[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd");
     constexpr TCHAR CandidateRun[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd");
     constexpr TCHAR CandidateJump[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump");
+    constexpr TCHAR AccuRigMesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/SK_POHPrince_AccuRig.SK_POHPrince_AccuRig");
+    constexpr TCHAR AccuRigIdle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Idle.UE58_MM_Idle");
+    constexpr TCHAR AccuRigWalk[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MF_Unarmed_Walk_Fwd.UE58_MF_Unarmed_Walk_Fwd");
+    constexpr TCHAR AccuRigRun[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MF_Unarmed_Jog_Fwd.UE58_MF_Unarmed_Jog_Fwd");
+    constexpr TCHAR AccuRigJump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Jump.UE58_MM_Jump");
+    constexpr TCHAR AccuRigFall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Fall_Loop.UE58_MM_Fall_Loop");
+    constexpr TCHAR AccuRigLand[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Land.UE58_MM_Land");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
     constexpr float StopRunningSpeed = 340.0f;
     constexpr float WalkSpeed = 260.0f;
     constexpr float SprintSpeed = 600.0f;
+    constexpr float AccuRigTargetVisualHeight = 175.0f;
+    constexpr float AccuRigSoleOverlap = 2.0f;
 }
 
 void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
-    const bool bUseMannyCandidate = CVarPrinceUseMannyCandidate.GetValueOnGameThread() != 0;
-    bMannyCandidateMode = bUseMannyCandidate;
-    PrinceMesh = LoadObject<USkeletalMesh>(nullptr, bUseMannyCandidate ? PrinceAnimationPaths::CandidateMesh : PrinceAnimationPaths::Mesh);
-    IdleAnimation = LoadObject<UAnimationAsset>(nullptr, bUseMannyCandidate ? PrinceAnimationPaths::CandidateIdle : PrinceAnimationPaths::Idle);
-    WalkAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
-    RunAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
-    JumpAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
-    UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_PATH mode=%s mesh=%s idle=%s locomotion=%s"),
-        bUseMannyCandidate ? TEXT("MannyCandidate") : TEXT("NativeTripo"),
-        *GetNameSafe(PrinceMesh), *GetNameSafe(IdleAnimation),
-        bUseMannyCandidate ? TEXT("disabled-for-diagnosis") : TEXT("enabled"));
+    const int32 Profile = CVarPrinceAnimationProfile.GetValueOnGameThread();
+    bMannyCandidateMode = Profile == 1;
+    bAccuRigCandidateMode = Profile == 2;
+    if (bAccuRigCandidateMode)
+    {
+        PrinceMesh = LoadObject<USkeletalMesh>(nullptr, PrinceAnimationPaths::AccuRigMesh);
+        IdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigIdle);
+        WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigWalk);
+        RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigRun);
+        JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigJump);
+        FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigFall);
+        LandAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigLand);
+    }
+    else
+    {
+        PrinceMesh = LoadObject<USkeletalMesh>(nullptr, bMannyCandidateMode ? PrinceAnimationPaths::CandidateMesh : PrinceAnimationPaths::Mesh);
+        IdleAnimation = LoadObject<UAnimationAsset>(nullptr, bMannyCandidateMode ? PrinceAnimationPaths::CandidateIdle : PrinceAnimationPaths::Idle);
+        WalkAnimation = bMannyCandidateMode ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
+        RunAnimation = bMannyCandidateMode ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
+        JumpAnimation = bMannyCandidateMode ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    }
+    UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_PATH profile=%d mesh=%s idle=%s locomotion=%s"),
+        Profile, *GetNameSafe(PrinceMesh), *GetNameSafe(IdleAnimation),
+        bMannyCandidateMode ? TEXT("disabled-for-diagnosis") : TEXT("enabled"));
 
     if (UWorld* World = GetWorld())
     {
@@ -148,6 +171,24 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
         {
             Mesh->SetSkeletalMesh(PrinceMesh);
         }
+        if (bAccuRigCandidateMode)
+        {
+            // AccuRIG exports this character at 100 cm.  Fit it to the
+            // template capsule from actual mesh bounds, not a hand-tuned Z
+            // value, so a re-export cannot revive the hovering/sinking bug.
+            const FBoxSphereBounds Bounds = PrinceMesh->GetBounds();
+            const float MinimumZ = Bounds.Origin.Z - Bounds.BoxExtent.Z;
+            const float MaximumZ = Bounds.Origin.Z + Bounds.BoxExtent.Z;
+            const float SourceHeight = MaximumZ - MinimumZ;
+            if (const UCapsuleComponent* Capsule = Character->GetCapsuleComponent(); SourceHeight > KINDA_SMALL_NUMBER)
+            {
+                const float Scale = PrinceAnimationPaths::AccuRigTargetVisualHeight / SourceHeight;
+                const float Z = -Capsule->GetUnscaledCapsuleHalfHeight() - MinimumZ * Scale - PrinceAnimationPaths::AccuRigSoleOverlap;
+                Mesh->SetRelativeScale3D(FVector(Scale));
+                Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, Z));
+                UE_LOG(LogPrinceAnimation, Log, TEXT("POH_ACCURIG_PLACEMENT scale=%.4f z=%.2f source_height=%.2f"), Scale, Z, SourceHeight);
+            }
+        }
         PrinceCharacters.Add(Character);
         UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
@@ -175,11 +216,16 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     if (Movement && Movement->IsFalling())
     {
         State.bWasFalling = true;
-        if (Active != JumpAnimation)
+        // The authored jump is only for upward movement. Once descending, the
+        // looping fall clip owns the pose until actual ground contact.
+        UAnimationAsset* Desired = (bAccuRigCandidateMode && Movement->Velocity.Z < 0.0f && FallAnimation)
+            ? FallAnimation.Get()
+            : JumpAnimation.Get();
+        if (Active != Desired)
         {
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
-            Mesh.PlayAnimation(JumpAnimation, false);
-            Active = JumpAnimation;
+            Mesh.PlayAnimation(Desired, Desired == FallAnimation);
+            Active = Desired;
             State.bAppliedIdleReferencePose = false;
         }
         return;
@@ -188,6 +234,20 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     if (State.bWasFalling)
     {
         State.bWasFalling = false;
+        if (bAccuRigCandidateMode && LandAnimation)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(LandAnimation, false);
+            Active = LandAnimation;
+            State.bAppliedIdleReferencePose = false;
+            return;
+        }
+    }
+
+    // Do not cut the landing clip off on the frame after ground contact.
+    if (bAccuRigCandidateMode && Active == LandAnimation && Mesh.IsPlaying())
+    {
+        return;
     }
 
     const bool bWasRunning = Active == RunAnimation;
