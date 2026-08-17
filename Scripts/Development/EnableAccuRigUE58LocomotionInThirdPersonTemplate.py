@@ -45,11 +45,15 @@ mesh.set_editor_property("animation_data", unreal.SingleAnimationPlayData(
 # no opt-in tag even if an old experimental asset was duplicated into it.
 tags = list(cdo.get_editor_property("tags"))
 cdo.set_editor_property("tags", [tag for tag in tags if str(tag) != "POHRuntimeSingleNode"])
+if not any(str(tag) == "POHSprintControl" for tag in cdo.get_editor_property("tags")):
+    cdo.set_editor_property("tags", list(cdo.get_editor_property("tags")) + [unreal.Name("POHSprintControl")])
 
 movement = cdo.get_editor_property("character_movement")
 # Match UE's third-person authored locomotion range.  The source Blend Space
 # reaches its run samples above the old experimental 260 cm/s cap.
-movement.set_editor_property("max_walk_speed", 500.0)
+# W is a walk; Shift is handled by the movement-only runtime controller and
+# raises it to the authored run range.  The AnimBP receives the real velocity.
+movement.set_editor_property("max_walk_speed", 260.0)
 movement.set_editor_property("max_walk_speed_crouched", 140.0)
 
 unreal.BlueprintEditorLibrary.compile_blueprint(character)

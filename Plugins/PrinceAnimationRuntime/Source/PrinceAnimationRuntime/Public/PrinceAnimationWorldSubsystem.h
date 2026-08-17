@@ -63,6 +63,10 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> LandAnimation;
 
+    /** Opt-in movement-only control for production pawns.  Unlike the legacy
+     *  diagnostic tag it never changes animation mode or assigns clips. */
+    TSet<TWeakObjectPtr<ACharacter>> SprintCharacters;
+
     // The Manny candidate is intentionally restricted to a single idle clip
     // while its bind pose and skinning are diagnosed.
     bool bMannyCandidateMode = false;

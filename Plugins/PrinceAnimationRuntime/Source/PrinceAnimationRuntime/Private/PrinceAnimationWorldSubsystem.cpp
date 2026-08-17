@@ -22,6 +22,7 @@ static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
 namespace PrinceAnimationPaths
 {
     const FName LegacyRuntimeTag(TEXT("POHRuntimeSingleNode"));
+    const FName SprintControlTag(TEXT("POHSprintControl"));
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
     // This asset is only the stable reference pose while the character is being reskinned to Manny.
     // It must not be replaced with an incompatible Manny retargeted clip.
@@ -100,6 +101,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
     }
 
     PrinceCharacters.Empty();
+    SprintCharacters.Empty();
     AnimationStates.Empty();
     Super::Deinitialize();
 }
@@ -110,6 +112,17 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
     if (!World || !PrinceMesh || !IdleAnimation || (!bMannyCandidateMode && (!WalkAnimation || !RunAnimation || !JumpAnimation)))
     {
         return;
+    }
+
+    for (auto It = SprintCharacters.CreateIterator(); It; ++It)
+    {
+        ACharacter* Character = It->Get();
+        if (!Character)
+        {
+            It.RemoveCurrent();
+            continue;
+        }
+        UpdatePlayerMovementSpeed(*Character);
     }
 
     for (auto It = AnimationStates.CreateIterator(); It; ++It)
@@ -162,6 +175,11 @@ void UPrinceAnimationWorldSubsystem::UpdatePlayerMovementSpeed(ACharacter& Chara
 void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
 {
     ACharacter* Character = Cast<ACharacter>(Actor);
+    if (Character && Character->ActorHasTag(PrinceAnimationPaths::SprintControlTag))
+    {
+        SprintCharacters.Add(Character);
+        UE_LOG(LogPrinceAnimation, Log, TEXT("POH_SPRINT_CONTROL_REGISTER character=%s"), *GetNameSafe(Character));
+    }
     // This subsystem predates the production AnimBP path.  Matching by mesh
     // asset is unsafe: any new AccuRIG test pawn would be silently hijacked by
     // the legacy single-node clips.  Legacy diagnostic pawns must now opt in

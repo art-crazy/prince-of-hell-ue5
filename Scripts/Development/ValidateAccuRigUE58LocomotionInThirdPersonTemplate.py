@@ -45,9 +45,11 @@ rotation = mesh.get_editor_property("relative_rotation")
 if abs(rotation.yaw + 90.0) > 0.01:
     raise RuntimeError("Pawn mesh is not aligned to UE Third Person forward")
 movement = cdo.get_editor_property("character_movement")
-if movement.get_editor_property("max_walk_speed") < 500.0:
-    raise RuntimeError("Pawn speed cannot reach authored run samples")
+if abs(movement.get_editor_property("max_walk_speed") - 260.0) > 0.01:
+    raise RuntimeError("Pawn walk speed must remain in the authored walk range")
 if any(str(tag) == "POHRuntimeSingleNode" for tag in cdo.get_editor_property("tags")):
     raise RuntimeError("Legacy runtime animation override is enabled on production pawn")
+if not any(str(tag) == "POHSprintControl" for tag in cdo.get_editor_property("tags")):
+    raise RuntimeError("Pawn lacks the movement-only sprint controller opt-in")
 
 unreal.log_warning("POH_UE58_LOCOMOTION_VALIDATE_OK pawn={} clips={}".format(CHARACTER, len(EXPECTED)))
