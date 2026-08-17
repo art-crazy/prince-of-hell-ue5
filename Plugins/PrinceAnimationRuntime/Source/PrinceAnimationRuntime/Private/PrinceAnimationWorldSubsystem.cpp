@@ -15,8 +15,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogPrinceAnimation, Log, All);
 
 static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
     TEXT("poh.AnimationProfile"),
-    0,
-    TEXT("Prince animation profile. 0 = stable native Tripo fallback; 1 = retired direct-Manny diagnostic; 2 = isolated AccuRIG + UE5.8 IK retarget."),
+    2,
+    TEXT("Prince animation profile. 0 = native Tripo fallback; 1 = retired direct-Manny diagnostic; 2 = default AccuRIG + UE5.8 IK retarget."),
     ECVF_Default);
 
 namespace PrinceAnimationPaths

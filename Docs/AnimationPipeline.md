@@ -97,7 +97,8 @@ therefore has an opt-in profile (`poh.AnimationProfile=2`) which selects the
 approved clips while a production graph is assembled. It derives scale and
 ground contact from the imported mesh bounds, so it has no model-specific
 height offset. Profile `0` remains the existing NativeTripo fallback; profile
-`1` is retired direct-Manny diagnosis and must not be used.
+`1` is retired direct-Manny diagnosis and must not be used. Profile `2` is the
+default runtime profile.
 
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
