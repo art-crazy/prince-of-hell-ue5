@@ -43,10 +43,16 @@ Skeleton** and **Bind Skin**. Test with AccuRIG's included motion before export.
 
 The disconnected telekinetic hand is an intentional Prince feature. Keep it
 out of the humanoid body guides and treat it as a separate accessory/socket
-after export; it must not pull the arm chain's skin weights. Export an Unreal
-FBX, run `AuditFbxSkinWeights.py` on it, and import it into a new isolated UE
-candidate. Only then create a Manny-to-Prince IK Rig / IK Retargeter and QA one
-idle animation before any locomotion is connected.
+after export; it must not pull the arm chain's skin weights. Use
+`SplitTelekineticHandForAccuRig.py` before AccuRIG: its largest connected mesh
+island becomes `POH_Warrior_BodyForAccuRig.fbx`; the detached left-hand island
+becomes `POH_TelekineticLeftHand.fbx`. Rig only the body. In UE the hand is a
+separate component driven from a left-forearm socket with a deterministic
+telekinetic offset, inertia and rotation; it is never a physics-driven part of
+the humanoid skin. Export the AccuRIG body as an Unreal FBX, run
+`AuditFbxSkinWeights.py` on it, and import it into a new isolated UE candidate.
+Only then create a Manny-to-Prince IK Rig / IK Retargeter and QA one idle
+animation before any locomotion is connected.
 
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
