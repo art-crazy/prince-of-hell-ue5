@@ -47,7 +47,10 @@ namespace PrinceAnimationPaths
     constexpr float WalkSpeed = 260.0f;
     constexpr float SprintSpeed = 600.0f;
     constexpr float AccuRigTargetVisualHeight = 175.0f;
-    constexpr float AccuRigSoleOverlap = 2.0f;
+    // The bounds include hanging cloth below the boot soles.  Lift the visual
+    // mesh slightly above the mathematical bounds floor so the boots read as
+    // grounded instead of sunk into the test surface.
+    constexpr float AccuRigVisualLift = 4.0f;
 }
 
 void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -183,9 +186,13 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
             if (const UCapsuleComponent* Capsule = Character->GetCapsuleComponent(); SourceHeight > KINDA_SMALL_NUMBER)
             {
                 const float Scale = PrinceAnimationPaths::AccuRigTargetVisualHeight / SourceHeight;
-                const float Z = -Capsule->GetUnscaledCapsuleHalfHeight() - MinimumZ * Scale - PrinceAnimationPaths::AccuRigSoleOverlap;
+                const float Z = -Capsule->GetUnscaledCapsuleHalfHeight() - MinimumZ * Scale + PrinceAnimationPaths::AccuRigVisualLift;
                 Mesh->SetRelativeScale3D(FVector(Scale));
                 Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, Z));
+                // The character has thin cloth and a detached-hand silhouette.
+                // Per-bone motion blur often leaves dark temporal trails on
+                // those fragments; disable it for this specific candidate.
+                Mesh->bPerBoneMotionBlur = false;
                 UE_LOG(LogPrinceAnimation, Log, TEXT("POH_ACCURIG_PLACEMENT scale=%.4f z=%.2f source_height=%.2f"), Scale, Z, SourceHeight);
             }
         }

@@ -100,6 +100,12 @@ height offset. Profile `0` remains the existing NativeTripo fallback; profile
 `1` is retired direct-Manny diagnosis and must not be used. Profile `2` is the
 default runtime profile.
 
+The AccuRIG runtime placement uses a 4 cm visual lift after bounds fitting.
+This compensates for the character's hanging cloth in the imported bounds;
+never reintroduce a fixed raw mesh Z offset. Per-bone motion blur is disabled
+for this candidate because it produces dark trails on the cloth/telekinetic
+silhouette; it does not alter lighting or shadows.
+
 The AccuRIG target pose must remain its imported rest pose. Do not use global
 chain-to-chain auto-align for this rig: its neck/head rest orientation already
 matches the mesh and auto-align produces an unnatural upward gaze.
