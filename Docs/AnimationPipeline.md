@@ -130,7 +130,14 @@ The first expansion batch is isolated in
 These clips are intentionally **not yet selected by the runtime subsystem**.
 They require one visual QA pass on the AccuRIG mesh before input/state-machine
 wiring, so the already approved idle/walk/run/jump loop cannot regress. The
-repeatable migration and retarget scripts are
+approved crouch triplet is now wired into the temporary runtime adapter:
+hold **Left Ctrl** to enter crouch, hold its idle, and release it to stand.
+It is deliberately a temporary key fallback until the production Enhanced
+Input action and Animation Blueprint replace the adapter. The roll clips
+remain isolated because their root-motion timing must be paired with a
+traversal action, rather than played as an in-place cosmetic clip.
+
+The repeatable migration and retarget scripts are
 `MigrateGameAnimationSampleCoreMoves.py` (run against the vault sample) and
 `RetargetGameAnimationSampleCoreMoves.py` (run against `test.uproject`).
 

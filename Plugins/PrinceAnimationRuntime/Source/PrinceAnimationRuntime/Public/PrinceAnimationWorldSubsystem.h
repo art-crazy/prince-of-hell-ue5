@@ -16,6 +16,7 @@ struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
     bool bWasFalling = false;
+    bool bWasCrouched = false;
     bool bAppliedIdleReferencePose = false;
 };
 
@@ -41,6 +42,7 @@ private:
     void RegisterPrince(AActor* Actor);
     void UpdatePrince(ACharacter& Character, USkeletalMeshComponent& Mesh, float HorizontalSpeedSquared);
     void UpdatePlayerMovementSpeed(ACharacter& Character) const;
+    void UpdatePlayerCrouchState(ACharacter& Character) const;
 
     UPROPERTY(Transient)
     TObjectPtr<USkeletalMesh> PrinceMesh;
@@ -62,6 +64,15 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> LandAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> CrouchIdleAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> EnterCrouchAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimationAsset> ExitCrouchAnimation;
 
     // The Manny candidate is intentionally restricted to a single idle clip
     // while its bind pose and skinning are diagnosed.

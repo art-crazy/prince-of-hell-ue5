@@ -40,6 +40,9 @@ namespace PrinceAnimationPaths
     constexpr TCHAR AccuRigJump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Jump.UE58_MM_Jump");
     constexpr TCHAR AccuRigFall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Fall_Loop.UE58_MM_Fall_Loop");
     constexpr TCHAR AccuRigLand[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Land.UE58_MM_Land");
+    constexpr TCHAR AccuRigCrouchIdle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Crouch_Idle_Loop.GAS_M_Neutral_Crouch_Idle_Loop");
+    constexpr TCHAR AccuRigEnterCrouch[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Transition_Stand_to_Crouch.GAS_M_Neutral_Transition_Stand_to_Crouch");
+    constexpr TCHAR AccuRigExitCrouch[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Transition_Crouch_to_Stand.GAS_M_Neutral_Transition_Crouch_to_Stand");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -68,6 +71,9 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
         JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigJump);
         FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigFall);
         LandAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigLand);
+        CrouchIdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigCrouchIdle);
+        EnterCrouchAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigEnterCrouch);
+        ExitCrouchAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigExitCrouch);
     }
     else
     {
@@ -132,6 +138,7 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
         {
             if (!bMannyCandidateMode)
             {
+                UpdatePlayerCrouchState(*Character);
                 UpdatePlayerMovementSpeed(*Character);
             }
             UpdatePrince(*Character, *Mesh, Character->GetVelocity().SizeSquared2D());
@@ -156,6 +163,35 @@ void UPrinceAnimationWorldSubsystem::UpdatePlayerMovementSpeed(ACharacter& Chara
     Movement->MaxWalkSpeed = Controller->IsInputKeyDown(EKeys::LeftShift)
         ? PrinceAnimationPaths::SprintSpeed
         : PrinceAnimationPaths::WalkSpeed;
+}
+
+void UPrinceAnimationWorldSubsystem::UpdatePlayerCrouchState(ACharacter& Character) const
+{
+    if (!bAccuRigCandidateMode || !Character.IsPlayerControlled())
+    {
+        return;
+    }
+
+    APlayerController* Controller = Cast<APlayerController>(Character.GetController());
+    UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
+    if (!Controller || !Movement)
+    {
+        return;
+    }
+
+    // The template has no crouch action by default. Keep this temporary
+    // fallback isolated in the runtime adapter: Left Ctrl is later replaced
+    // by the production Enhanced Input action with the same behavior.
+    Movement->GetNavAgentPropertiesRef().bCanCrouch = true;
+    Movement->MaxWalkSpeedCrouched = 140.0f;
+    if (Controller->IsInputKeyDown(EKeys::LeftControl))
+    {
+        Character.Crouch();
+    }
+    else
+    {
+        Character.UnCrouch();
+    }
 }
 
 void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
@@ -220,6 +256,40 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     }
 
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
+    const bool bIsCrouched = Character.bIsCrouched;
+    if (bAccuRigCandidateMode && State.bWasCrouched != bIsCrouched)
+    {
+        State.bWasCrouched = bIsCrouched;
+        UAnimationAsset* Transition = bIsCrouched ? EnterCrouchAnimation.Get() : ExitCrouchAnimation.Get();
+        if (Transition)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(Transition, false);
+            Active = Transition;
+            State.bAppliedIdleReferencePose = false;
+            return;
+        }
+    }
+
+    // Preserve the authored transition until it finishes; without this gate
+    // a state update on the next tick would cut it directly to the idle pose.
+    if (bAccuRigCandidateMode && (Active == EnterCrouchAnimation || Active == ExitCrouchAnimation) && Mesh.IsPlaying())
+    {
+        return;
+    }
+
+    if (bAccuRigCandidateMode && bIsCrouched && CrouchIdleAnimation)
+    {
+        if (Active != CrouchIdleAnimation)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(CrouchIdleAnimation, true);
+            Active = CrouchIdleAnimation;
+            State.bAppliedIdleReferencePose = false;
+        }
+        return;
+    }
+
     if (Movement && Movement->IsFalling())
     {
         State.bWasFalling = true;
