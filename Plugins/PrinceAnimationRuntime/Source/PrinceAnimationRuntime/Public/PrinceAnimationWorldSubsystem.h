@@ -19,6 +19,7 @@ struct FPrinceAnimationState
     bool bAppliedIdleReferencePose = false;
     FVector GroundedMeshRelativeLocation = FVector::ZeroVector;
     bool bHasGroundedMeshRelativeLocation = false;
+    float StandingCapsuleHalfHeight = 0.0f;
 };
 
 /**

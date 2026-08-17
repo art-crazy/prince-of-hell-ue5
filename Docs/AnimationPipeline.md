@@ -135,6 +135,13 @@ by the production Enhanced Input action and Animation Blueprint. The roll
 clips remain isolated because their root-motion timing must be paired with a
 traversal action, rather than played as an in-place cosmetic clip.
 
+The runtime automatically compensates the visual mesh for the crouched capsule
+height, preserving the soles on the ground. For a rare re-export whose bounds
+need a cosmetic adjustment, use the UE console command
+`poh.AccuRigCrouchVisualOffset <centimetres>` while playing (for example,
+`poh.AccuRigCrouchVisualOffset 2`). Default `0` is the correct baseline;
+positive raises the crouched mesh and negative lowers it.
+
 The repeatable migration and retarget scripts are
 `MigrateGameAnimationSampleCoreMoves.py` (run against the vault sample) and
 `RetargetGameAnimationSampleCoreMoves.py` (run against `test.uproject`).

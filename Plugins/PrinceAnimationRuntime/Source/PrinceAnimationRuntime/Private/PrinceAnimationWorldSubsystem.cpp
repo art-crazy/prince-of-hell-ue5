@@ -19,6 +19,12 @@ static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
     TEXT("Prince animation profile. 0 = native Tripo fallback; 1 = retired direct-Manny diagnostic; 2 = default AccuRIG + UE5.8 IK retarget."),
     ECVF_Default);
 
+static TAutoConsoleVariable<float> CVarPrinceAccuRigCrouchVisualOffset(
+    TEXT("poh.AccuRigCrouchVisualOffset"),
+    0.0f,
+    TEXT("Fine vertical adjustment in cm for the AccuRIG mesh while crouched. Default 0 preserves grounded feet."),
+    ECVF_Default);
+
 namespace PrinceAnimationPaths
 {
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
@@ -232,6 +238,10 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
         FPrinceAnimationState& State = AnimationStates.FindOrAdd(Mesh);
         State.GroundedMeshRelativeLocation = Mesh->GetRelativeLocation();
         State.bHasGroundedMeshRelativeLocation = true;
+        if (const UCapsuleComponent* Capsule = Character->GetCapsuleComponent())
+        {
+            State.StandingCapsuleHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
+        }
         UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
 }
@@ -247,7 +257,19 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     // Preserve the grounded placement captured during registration instead.
     if (bAccuRigCandidateMode && State.bHasGroundedMeshRelativeLocation)
     {
-        Mesh.SetRelativeLocation(State.GroundedMeshRelativeLocation);
+        FVector MeshLocation = State.GroundedMeshRelativeLocation;
+        if (Character.bIsCrouched)
+        {
+            if (const UCapsuleComponent* Capsule = Character.GetCapsuleComponent())
+            {
+                // Crouch moves the capsule's origin down to preserve collision
+                // at the feet. Counter that movement on this custom visual
+                // mesh, otherwise it sinks into the floor.
+                MeshLocation.Z += State.StandingCapsuleHalfHeight - Capsule->GetUnscaledCapsuleHalfHeight();
+            }
+            MeshLocation.Z += CVarPrinceAccuRigCrouchVisualOffset.GetValueOnGameThread();
+        }
+        Mesh.SetRelativeLocation(MeshLocation);
     }
 
     if (bMannyCandidateMode)
