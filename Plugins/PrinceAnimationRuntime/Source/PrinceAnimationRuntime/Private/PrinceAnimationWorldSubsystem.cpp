@@ -41,8 +41,6 @@ namespace PrinceAnimationPaths
     constexpr TCHAR AccuRigFall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Fall_Loop.UE58_MM_Fall_Loop");
     constexpr TCHAR AccuRigLand[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Land.UE58_MM_Land");
     constexpr TCHAR AccuRigCrouchIdle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Crouch_Idle_Loop.GAS_M_Neutral_Crouch_Idle_Loop");
-    constexpr TCHAR AccuRigEnterCrouch[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Transition_Stand_to_Crouch.GAS_M_Neutral_Transition_Stand_to_Crouch");
-    constexpr TCHAR AccuRigExitCrouch[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Transition_Crouch_to_Stand.GAS_M_Neutral_Transition_Crouch_to_Stand");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -72,8 +70,6 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
         FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigFall);
         LandAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigLand);
         CrouchIdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigCrouchIdle);
-        EnterCrouchAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigEnterCrouch);
-        ExitCrouchAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigExitCrouch);
     }
     else
     {
@@ -233,6 +229,9 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
             }
         }
         PrinceCharacters.Add(Character);
+        FPrinceAnimationState& State = AnimationStates.FindOrAdd(Mesh);
+        State.GroundedMeshRelativeLocation = Mesh->GetRelativeLocation();
+        State.bHasGroundedMeshRelativeLocation = true;
         UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
 }
@@ -241,6 +240,15 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
 {
     FPrinceAnimationState& State = AnimationStates.FindOrAdd(&Mesh);
     TObjectPtr<UAnimationAsset>& Active = State.ActiveAnimation;
+
+    // CharacterMovement changes the mesh translation while changing capsule
+    // height for a crouch.  That default assumes the template mannequin's
+    // mesh offset, so it lifts this imported AccuRIG mesh off the floor.
+    // Preserve the grounded placement captured during registration instead.
+    if (bAccuRigCandidateMode && State.bHasGroundedMeshRelativeLocation)
+    {
+        Mesh.SetRelativeLocation(State.GroundedMeshRelativeLocation);
+    }
 
     if (bMannyCandidateMode)
     {
@@ -257,27 +265,6 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
 
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     const bool bIsCrouched = Character.bIsCrouched;
-    if (bAccuRigCandidateMode && State.bWasCrouched != bIsCrouched)
-    {
-        State.bWasCrouched = bIsCrouched;
-        UAnimationAsset* Transition = bIsCrouched ? EnterCrouchAnimation.Get() : ExitCrouchAnimation.Get();
-        if (Transition)
-        {
-            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
-            Mesh.PlayAnimation(Transition, false);
-            Active = Transition;
-            State.bAppliedIdleReferencePose = false;
-            return;
-        }
-    }
-
-    // Preserve the authored transition until it finishes; without this gate
-    // a state update on the next tick would cut it directly to the idle pose.
-    if (bAccuRigCandidateMode && (Active == EnterCrouchAnimation || Active == ExitCrouchAnimation) && Mesh.IsPlaying())
-    {
-        return;
-    }
-
     if (bAccuRigCandidateMode && bIsCrouched && CrouchIdleAnimation)
     {
         if (Active != CrouchIdleAnimation)

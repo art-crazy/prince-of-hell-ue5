@@ -127,14 +127,12 @@ The first expansion batch is isolated in
 - `GAS_M_Neutral_Jump_F_Land_Roll_Lfoot` / `Rfoot` — forward landing roll
   variants.
 
-These clips are intentionally **not yet selected by the runtime subsystem**.
-They require one visual QA pass on the AccuRIG mesh before input/state-machine
-wiring, so the already approved idle/walk/run/jump loop cannot regress. The
-approved crouch triplet is now wired into the temporary runtime adapter:
-hold **Left Ctrl** to enter crouch, hold its idle, and release it to stand.
-It is deliberately a temporary key fallback until the production Enhanced
-Input action and Animation Blueprint replace the adapter. The roll clips
-remain isolated because their root-motion timing must be paired with a
+The crouch idle is wired into the temporary runtime adapter: hold **Left Ctrl**
+to crouch and release it to stand. The entry/exit clips remain isolated until
+their root transform is matched to the capsule change; using them early lifts
+the imported mesh off the ground. This temporary key fallback will be replaced
+by the production Enhanced Input action and Animation Blueprint. The roll
+clips remain isolated because their root-motion timing must be paired with a
 traversal action, rather than played as an in-place cosmetic clip.
 
 The repeatable migration and retarget scripts are
