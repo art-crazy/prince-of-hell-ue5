@@ -32,7 +32,19 @@ def main() -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=source, use_anim=False)
 
-    meshes = [item for item in bpy.context.scene.objects if item.type == "MESH"]
+    # Some Tripo FBX exports carry a tiny default ``Cube`` helper alongside the
+    # character. It is not character geometry and makes AccuRIG's auto-bind
+    # fail, so exclude only that unambiguous helper. Keep every real mesh part.
+    meshes = [
+        item
+        for item in bpy.context.scene.objects
+        if item.type == "MESH"
+        and not (
+            item.name.casefold() == "cube"
+            and len(item.data.vertices) == 8
+            and len(item.data.polygons) == 6
+        )
+    ]
     if not meshes:
         raise RuntimeError("The source FBX contains no mesh objects")
 
@@ -44,7 +56,7 @@ def main() -> None:
         mesh.animation_data_clear()
 
     for item in list(bpy.context.scene.objects):
-        if item.type != "MESH":
+        if item not in meshes:
             bpy.data.objects.remove(item, do_unlink=True)
 
     bpy.ops.object.select_all(action="DESELECT")
@@ -53,15 +65,26 @@ def main() -> None:
     bpy.context.view_layer.objects.active = meshes[0]
 
     os.makedirs(os.path.dirname(destination), exist_ok=True)
-    bpy.ops.export_scene.fbx(
-        filepath=destination,
-        use_selection=True,
-        object_types={"MESH"},
-        bake_anim=False,
-        add_leaf_bones=False,
-        path_mode="AUTO",
-        embed_textures=False,
-    )
+    if destination.casefold().endswith(".obj"):
+        bpy.ops.wm.obj_export(
+            filepath=destination,
+            export_selected_objects=True,
+            export_materials=True,
+            export_uv=True,
+            export_normals=True,
+            export_triangulated_mesh=True,
+            path_mode="AUTO",
+        )
+    else:
+        bpy.ops.export_scene.fbx(
+            filepath=destination,
+            use_selection=True,
+            object_types={"MESH"},
+            bake_anim=False,
+            add_leaf_bones=False,
+            path_mode="AUTO",
+            embed_textures=False,
+        )
 
     print(f"ACCURIG_STATIC_FBX={destination}")
     print(f"MESH_COUNT={len(meshes)}")

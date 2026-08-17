@@ -26,15 +26,17 @@ AccuRIG (or equivalent) and validate the exported FBX first with
 ## AccuRIG rebuild (required before new UE animation work)
 
 The clean AccuRIG input is generated, never edited in place:
-`Saved/AccuRig/POH_Warrior_StaticForAccuRig.fbx`. Generate it again from a new
+`Saved/AccuRig/POH_Warrior_StaticForAccuRig.obj`. Generate it again from a new
 Tripo export with:
 
 ```text
-Blender 5.2\blender.exe --background --python Scripts/Development/PrepareStaticMeshForAccuRig.py -- <source.fbx> Saved/AccuRig/POH_Warrior_StaticForAccuRig.fbx
+Blender 5.2\blender.exe --background --python Scripts/Development/PrepareStaticMeshForAccuRig.py -- <source.fbx> Saved/AccuRig/POH_Warrior_StaticForAccuRig.obj
 ```
 
 The preparation script preserves the source FBX and materials but intentionally
-strips its armature and all vertex weights. In AccuRIG: import this file, put
+strips its armature and all vertex weights. The OBJ form also excludes Tripo's
+stray 8-vertex `Cube` helper, which otherwise breaks AccuRIG's auto-bind. In
+AccuRIG: import this file, put
 the character in a neutral A/T pose, place the body guides precisely at hips,
 knees, ankles, shoulders, elbows, wrists, spine and head, then use **Generate
 Skeleton** and **Bind Skin**. Test with AccuRIG's included motion before export.
