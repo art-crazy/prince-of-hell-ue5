@@ -1,0 +1,119 @@
+"""Retarget Game Animation Sample core moves to the Prince's AccuRIG skeleton.
+
+This is deliberately isolated from runtime.  A human validates these UE5.8
+clips before gameplay code starts selecting them.
+"""
+
+import unreal
+
+
+FOLDER = "/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/Rigging"
+SOURCE_RIG = FOLDER + "/IK_GAS_UEFN_Mannequin"
+TARGET_RIG = FOLDER + "/IK_POHPrince_AccuRig"
+RETARGETER = FOLDER + "/RTG_GAS_UEFN_To_POHAccuRig"
+SEED_RETARGETER = "/Game/_Sandbox/Rigging/RTG_Mannequin_To_POH"
+SOURCE_MESH = "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin"
+TARGET_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/SK_POHPrince_AccuRig"
+TARGET_FOLDER = "/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core"
+
+CHAINS = (
+    ("Spine", "spine_01", "spine_05"),
+    ("Neck", "neck_01", "neck_02"),
+    ("Head", "head", "head"),
+    ("LeftLeg", "thigh_l", "foot_l"),
+    ("LeftFoot", "ball_l", "ball_l"),
+    ("RightLeg", "thigh_r", "foot_r"),
+    ("RightFoot", "ball_r", "ball_r"),
+    ("LeftClavicle", "clavicle_l", "clavicle_l"),
+    ("LeftArm", "upperarm_l", "hand_l"),
+    ("RightClavicle", "clavicle_r", "clavicle_r"),
+    ("RightArm", "upperarm_r", "hand_r"),
+)
+
+SOURCE_ANIMATIONS = (
+    "/Game/Characters/UEFN_Mannequin/Animations/Idle/M_Neutral_Crouch_Idle_Loop",
+    "/Game/Characters/UEFN_Mannequin/Animations/Crouch/M_Neutral_Transition_Stand_to_Crouch",
+    "/Game/Characters/UEFN_Mannequin/Animations/Crouch/M_Neutral_Transition_Crouch_to_Stand",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Roll_Lfoot",
+    "/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Roll_Rfoot",
+)
+
+
+def require(path):
+    asset = unreal.load_asset(path)
+    if not asset:
+        raise RuntimeError("Missing asset: " + path)
+    return asset
+
+
+def create_rig(path, mesh):
+    rig = unreal.load_asset(path)
+    if not rig:
+        rig = unreal.IKRigDefinitionFactory.create_new_ik_rig_asset(FOLDER, path.rsplit("/", 1)[-1])
+    controller = unreal.IKRigController.get_controller(rig)
+    if not controller.set_skeletal_mesh(mesh) or not controller.set_retarget_root("pelvis"):
+        raise RuntimeError("Unable to configure IK Rig: " + path)
+    existing = {str(chain.chain_name) for chain in controller.get_retarget_chains()}
+    for name, start_bone, end_bone in CHAINS:
+        if name not in existing and str(controller.add_retarget_chain(name, start_bone, end_bone, "")) != name:
+            raise RuntimeError("Unable to create retarget chain: " + name)
+    unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+    return rig
+
+
+source_mesh = require(SOURCE_MESH)
+target_mesh = require(TARGET_MESH)
+source_rig = create_rig(SOURCE_RIG, source_mesh)
+target_rig = require(TARGET_RIG)
+
+retargeter = unreal.load_asset(RETARGETER)
+if not retargeter:
+    retargeter = unreal.EditorAssetLibrary.duplicate_asset(SEED_RETARGETER, RETARGETER)
+if not retargeter:
+    raise RuntimeError("Unable to create Game Animation Sample retargeter")
+controller = unreal.IKRetargeterController.get_controller(retargeter)
+side = unreal.RetargetSourceOrTarget
+controller.remove_all_ops()
+controller.set_ik_rig(side.SOURCE, source_rig)
+controller.set_ik_rig(side.TARGET, target_rig)
+controller.add_default_ops()
+controller.assign_ik_rig_to_all_ops(side.SOURCE, source_rig)
+controller.assign_ik_rig_to_all_ops(side.TARGET, target_rig)
+for name, _, _ in CHAINS:
+    if not controller.set_source_chain(name, name):
+        raise RuntimeError("Unable to map retarget chain: " + name)
+
+# Keep AccuRIG's approved native reference pose.  Direct alignment against a
+# mannequin head was the root cause of the old skyward-head defect.
+target_bones = target_mesh.get_editor_property("skeleton").get_reference_pose().get_bone_names()
+controller.reset_retarget_pose("Default Pose", target_bones, side.TARGET)
+unreal.EditorAssetLibrary.save_asset(RETARGETER, only_if_is_dirty=False)
+
+registry = unreal.AssetRegistryHelpers.get_asset_registry()
+inputs = unreal.IKRetargetBatchOperationInputs()
+inputs.assets_to_retarget = []
+for path in SOURCE_ANIMATIONS:
+    name = path.rsplit("/", 1)[-1]
+    data = registry.get_asset_by_object_path(unreal.Name(path + "." + name))
+    if not data.is_valid():
+        raise RuntimeError("Missing Game Animation Sample clip: " + path)
+    inputs.assets_to_retarget.append(data)
+inputs.source_mesh = source_mesh
+inputs.target_mesh = target_mesh
+inputs.ik_retarget_asset = retargeter
+inputs.target_path = TARGET_FOLDER
+inputs.prefix = "GAS_"
+inputs.include_referenced_assets = False
+inputs.overwrite_existing_files = True
+outputs = unreal.IKRetargetBatchOperation.run_batch_retarget(inputs)
+if len(outputs) != len(inputs.assets_to_retarget):
+    raise RuntimeError("Expected {} retargeted clips, received {}".format(len(inputs.assets_to_retarget), len(outputs)))
+
+target_skeleton = target_mesh.get_editor_property("skeleton")
+for output in outputs:
+    path = str(output.package_name)
+    asset = unreal.load_asset(path)
+    if not asset or asset.get_editor_property("skeleton") != target_skeleton:
+        raise RuntimeError("Invalid Prince retargeted clip: " + path)
+    unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+    unreal.log_warning("POH_GAS_RETARGET_READY {}".format(path))

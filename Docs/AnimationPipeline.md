@@ -110,6 +110,30 @@ The AccuRIG target pose must remain its imported rest pose. Do not use global
 chain-to-chain auto-align for this rig: its neck/head rest orientation already
 matches the mesh and auto-align produces an unnatural upward gaze.
 
+### Game Animation Sample expansion set
+
+The local UE 5.8 Game Animation Sample vault installation is the approved
+source for higher-quality traversal and transition motion. Its source assets
+are migrated into this project only as a library and then retargeted through
+`IK_GAS_UEFN_Mannequin` and `RTG_GAS_UEFN_To_POHAccuRig`; direct skeleton or
+animation assignment remains prohibited.
+
+The first expansion batch is isolated in
+`/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core`:
+
+- `GAS_M_Neutral_Crouch_Idle_Loop` — crouched idle.
+- `GAS_M_Neutral_Transition_Stand_to_Crouch` — enter crouch.
+- `GAS_M_Neutral_Transition_Crouch_to_Stand` — leave crouch.
+- `GAS_M_Neutral_Jump_F_Land_Roll_Lfoot` / `Rfoot` — forward landing roll
+  variants.
+
+These clips are intentionally **not yet selected by the runtime subsystem**.
+They require one visual QA pass on the AccuRIG mesh before input/state-machine
+wiring, so the already approved idle/walk/run/jump loop cannot regress. The
+repeatable migration and retarget scripts are
+`MigrateGameAnimationSampleCoreMoves.py` (run against the vault sample) and
+`RetargetGameAnimationSampleCoreMoves.py` (run against `test.uproject`).
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
