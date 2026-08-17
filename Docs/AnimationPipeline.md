@@ -35,24 +35,29 @@ Blender 5.2\blender.exe --background --python Scripts/Development/PrepareStaticM
 
 The preparation script preserves the source FBX and materials but intentionally
 strips its armature and all vertex weights. It rebuilds the export scene around
-one mesh object, so no import helper or source-rig node can reach AccuRIG. In
-AccuRIG: import this file, put
-the character in a neutral A/T pose, place the body guides precisely at hips,
-knees, ankles, shoulders, elbows, wrists, spine and head, then use **Generate
-Skeleton** and **Bind Skin**. Test with AccuRIG's included motion before export.
+one mesh object, so no import helper or source-rig node can reach AccuRIG. For
+this specific character, use the **complete original model** and leave
+AccuRIG's automatically placed body and hand guides unchanged unless a guide
+is visibly outside the anatomy. Field testing showed that manually placing a
+guide on the disconnected wrist makes AccuRIG fail, while its default solve
+produces a valid 100-bone, fully weighted rig. Test with an included motion
+before export.
 
-The disconnected telekinetic hand is an intentional Prince feature. Keep it
-out of the humanoid body guides and treat it as a separate accessory/socket
-after export; it must not pull the arm chain's skin weights. Use
-`SplitTelekineticHandForAccuRig.py` before AccuRIG: its largest connected mesh
-island becomes `POH_Warrior_BodyForAccuRig.fbx`; the detached left-hand island
-becomes `POH_TelekineticLeftHand.fbx`. Rig only the body. In UE the hand is a
-separate component driven from a left-forearm socket with a deterministic
-telekinetic offset, inertia and rotation; it is never a physics-driven part of
-the humanoid skin. Export the AccuRIG body as an Unreal FBX, run
-`AuditFbxSkinWeights.py` on it, and import it into a new isolated UE candidate.
-Only then create a Manny-to-Prince IK Rig / IK Retargeter and QA one idle
-animation before any locomotion is connected.
+The disconnected telekinetic hand is an intentional Prince feature. Do not
+separate it before the AccuRIG solve: the complete model is the reliable rigging
+input. After a successful solve/import, separate the hand as an accessory in
+the UE preparation stage. The hand component will be driven from a
+left-forearm socket with a deterministic telekinetic offset, inertia and
+rotation; it is never a physics-driven part of the humanoid skin.
+
+When AccuRIG cloud export is unavailable but the local **Calibrate** preview
+works, its successful rig is cached in `Saved/AccuRig/.../accurig_offset.iAvatar`
+and `accurig.glb`. Convert the cached GLB locally with
+`ConvertAccuRigGlbToUnrealFbx.py`, then run `AuditFbxSkinWeights.py`. The valid
+Prince export has 48,894 vertices, 100 deform groups, and zero unweighted
+vertices. Import it into a new isolated UE candidate. Only then create a
+Manny-to-Prince IK Rig / IK Retargeter and QA one idle animation before any
+locomotion is connected.
 
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
