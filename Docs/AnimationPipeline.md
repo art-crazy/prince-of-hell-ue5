@@ -59,6 +59,17 @@ vertices. Import it into a new isolated UE candidate. Only then create a
 Manny-to-Prince IK Rig / IK Retargeter and QA one idle animation before any
 locomotion is connected.
 
+### Validated manual AccuRIG export
+
+The preferred current source is the successful user export
+`Saved/AccuRig/Export/POH_Prince_AccuRig_Final.fbx`, made with **Unreal (UE5
+Skeleton)** and **Character Only**. It has 37,884 vertices, 54 non-empty skin
+groups, and zero unweighted vertices. It is a clean, upright A-pose and must
+be imported only through `ImportAccuRigPrinceForValidation.py` to the isolated
+`/Game/_Sandbox/Characters/PrinceOfHell/AccuRig` path. It must not replace the
+playable NativeTripo mesh until the reference pose and a single retargeted idle
+clip have passed visual QA.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is

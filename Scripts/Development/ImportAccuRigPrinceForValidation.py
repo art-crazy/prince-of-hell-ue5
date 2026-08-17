@@ -8,7 +8,7 @@ Animation Blueprint.
 import unreal
 
 
-SOURCE = r"C:\Users\artcr\Documents\Unreal Projects\test\Saved\AccuRig\Export\SK_POHPrince_AccuRig_Rigged.fbx"
+SOURCE = r"C:\Users\artcr\Documents\Unreal Projects\test\Saved\AccuRig\Export\POH_Prince_AccuRig_Final.fbx"
 DESTINATION = "/Game/_Sandbox/Characters/PrinceOfHell/AccuRig"
 NAME = "SK_POHPrince_AccuRig"
 
@@ -38,7 +38,7 @@ if not mesh:
 
 skeleton = mesh.get_editor_property("skeleton")
 bone_names = [str(name) for name in skeleton.get_reference_pose().get_bone_names()]
-for required in ("Hip", "L_Hand", "R_Hand", "L_Foot", "R_Foot"):
+for required in ("pelvis", "hand_l", "hand_r", "foot_l", "foot_r"):
     if required not in bone_names:
         raise RuntimeError("Imported AccuRIG skeleton is missing required bone: " + required)
 
