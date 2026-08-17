@@ -21,6 +21,7 @@ static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
 
 namespace PrinceAnimationPaths
 {
+    const FName LegacyRuntimeTag(TEXT("POHRuntimeSingleNode"));
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
     // This asset is only the stable reference pose while the character is being reskinned to Manny.
     // It must not be replaced with an incompatible Manny retargeted clip.
@@ -161,7 +162,11 @@ void UPrinceAnimationWorldSubsystem::UpdatePlayerMovementSpeed(ACharacter& Chara
 void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
 {
     ACharacter* Character = Cast<ACharacter>(Actor);
-    if (!Character)
+    // This subsystem predates the production AnimBP path.  Matching by mesh
+    // asset is unsafe: any new AccuRIG test pawn would be silently hijacked by
+    // the legacy single-node clips.  Legacy diagnostic pawns must now opt in
+    // explicitly, leaving template and production characters untouched.
+    if (!Character || !Character->ActorHasTag(PrinceAnimationPaths::LegacyRuntimeTag))
     {
         return;
     }
