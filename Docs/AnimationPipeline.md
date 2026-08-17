@@ -139,6 +139,24 @@ The repeatable migration and retarget scripts are
 `MigrateGameAnimationSampleCoreMoves.py` (run against the vault sample) and
 `RetargetGameAnimationSampleCoreMoves.py` (run against `test.uproject`).
 
+### Production animation architecture migration
+
+The playable `BP_ThirdPersonCharacter` was historically converted to a
+single-node mesh preview so clips could be debugged one at a time. It is not
+the production architecture and must not own capsule-changing actions such as
+crouch. The approved replacement is a dedicated Prince Character Blueprint
+with one calibrated AccuRIG mesh offset, Enhanced Input actions and an
+Animation Blueprint that owns `Standing → Crouch → Crouch Idle → Standing`.
+Foot placement is added after this graph owns the pose, not in the world
+subsystem.
+
+The UE 5.8 Game Animation Sample foundation has been migrated in isolation:
+`/Game/Blueprints/RetargetedCharacters/ABP_GenericRetarget` is a generic
+retarget graph (it deliberately has no fixed target skeleton) and
+`BP_Manny` is its reference setup. This is the correct reference for the
+Prince migration; it replaces neither the Prince mesh nor the active pawn
+until the new Character Blueprint is assembled and verified.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
