@@ -16,6 +16,7 @@ struct FPrinceAnimationState
 {
     TObjectPtr<UAnimationAsset> ActiveAnimation;
     bool bWasFalling = false;
+    bool bAppliedIdleReferencePose = false;
 };
 
 /**
@@ -55,6 +56,10 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimationAsset> JumpAnimation;
+
+    // The Manny candidate is intentionally restricted to a single idle clip
+    // while its bind pose and skinning are diagnosed.
+    bool bMannyCandidateMode = false;
 
     /** Allows isolated clip QA without modifying runtime source code. */
     UPROPERTY(Config, EditAnywhere, Category="Prince|Animation")

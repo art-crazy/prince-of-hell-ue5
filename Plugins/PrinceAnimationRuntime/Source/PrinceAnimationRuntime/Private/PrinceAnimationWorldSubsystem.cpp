@@ -7,17 +7,31 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/IConsoleManager.h"
 #include "InputCoreTypes.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogPrinceAnimation, Log, All);
+
+static TAutoConsoleVariable<int32> CVarPrinceUseMannyCandidate(
+    TEXT("poh.UseMannyCandidate"),
+    0,
+    TEXT("Use the isolated UE Manny-skeleton Prince candidate. 0 = stable Tripo fallback, 1 = direct UE 5.8 animation verification."),
+    ECVF_Default);
 
 namespace PrinceAnimationPaths
 {
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
-    // Diagnostic stage 1: validate one UE 5.8 clip on the actual playable
-    // skeleton before enabling the rest of the retargeted state set.
-    constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/RetargetedManny/POH_MM_Idle.POH_MM_Idle");
+    // This asset is only the stable reference pose while the character is being reskinned to Manny.
+    // It must not be replaced with an incompatible Manny retargeted clip.
+    constexpr TCHAR Idle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripoidle.SK_POHPrince_NativeTripoidle");
     constexpr TCHAR Walk[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripowalk.SK_POHPrince_NativeTripowalk");
     constexpr TCHAR Run[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTriporun.SK_POHPrince_NativeTriporun");
     constexpr TCHAR Jump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripojump.SK_POHPrince_NativeTripojump");
+    constexpr TCHAR CandidateMesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/MannyCandidate/SK_POHPrince_MannyCandidate.SK_POHPrince_MannyCandidate");
+    constexpr TCHAR CandidateIdle[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle");
+    constexpr TCHAR CandidateWalk[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd");
+    constexpr TCHAR CandidateRun[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd");
+    constexpr TCHAR CandidateJump[] = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -29,11 +43,17 @@ namespace PrinceAnimationPaths
 void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
-    PrinceMesh = LoadObject<USkeletalMesh>(nullptr, PrinceAnimationPaths::Mesh);
-    IdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Idle);
-    WalkAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
-    RunAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
-    JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    const bool bUseMannyCandidate = CVarPrinceUseMannyCandidate.GetValueOnGameThread() != 0;
+    bMannyCandidateMode = bUseMannyCandidate;
+    PrinceMesh = LoadObject<USkeletalMesh>(nullptr, bUseMannyCandidate ? PrinceAnimationPaths::CandidateMesh : PrinceAnimationPaths::Mesh);
+    IdleAnimation = LoadObject<UAnimationAsset>(nullptr, bUseMannyCandidate ? PrinceAnimationPaths::CandidateIdle : PrinceAnimationPaths::Idle);
+    WalkAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Walk);
+    RunAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Run);
+    JumpAnimation = bUseMannyCandidate ? nullptr : LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::Jump);
+    UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_PATH mode=%s mesh=%s idle=%s locomotion=%s"),
+        bUseMannyCandidate ? TEXT("MannyCandidate") : TEXT("NativeTripo"),
+        *GetNameSafe(PrinceMesh), *GetNameSafe(IdleAnimation),
+        bUseMannyCandidate ? TEXT("disabled-for-diagnosis") : TEXT("enabled"));
 
     if (UWorld* World = GetWorld())
     {
@@ -60,7 +80,7 @@ void UPrinceAnimationWorldSubsystem::Deinitialize()
 void UPrinceAnimationWorldSubsystem::Tick(float)
 {
     UWorld* World = GetWorld();
-    if (!World || !PrinceMesh || !IdleAnimation || !WalkAnimation || !RunAnimation || !JumpAnimation)
+    if (!World || !PrinceMesh || !IdleAnimation || (!bMannyCandidateMode && (!WalkAnimation || !RunAnimation || !JumpAnimation)))
     {
         return;
     }
@@ -84,7 +104,10 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
 
         if (USkeletalMeshComponent* Mesh = Character->GetMesh())
         {
-            UpdatePlayerMovementSpeed(*Character);
+            if (!bMannyCandidateMode)
+            {
+                UpdatePlayerMovementSpeed(*Character);
+            }
             UpdatePrince(*Character, *Mesh, Character->GetVelocity().SizeSquared2D());
         }
     }
@@ -118,9 +141,15 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
     }
 
     USkeletalMeshComponent* Mesh = Character->GetMesh();
-    if (Mesh && Mesh->GetSkeletalMeshAsset() == PrinceMesh)
+    const USkeletalMesh* StableMesh = LoadObject<USkeletalMesh>(nullptr, PrinceAnimationPaths::Mesh);
+    if (Mesh && (Mesh->GetSkeletalMeshAsset() == PrinceMesh || Mesh->GetSkeletalMeshAsset() == StableMesh))
     {
+        if (Mesh->GetSkeletalMeshAsset() != PrinceMesh)
+        {
+            Mesh->SetSkeletalMesh(PrinceMesh);
+        }
         PrinceCharacters.Add(Character);
+        UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
 }
 
@@ -128,6 +157,20 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
 {
     FPrinceAnimationState& State = AnimationStates.FindOrAdd(&Mesh);
     TObjectPtr<UAnimationAsset>& Active = State.ActiveAnimation;
+
+    if (bMannyCandidateMode)
+    {
+        // Deliberately play exactly one compatible asset. If this fails, the
+        // defect is in the imported mesh/bind pose rather than locomotion.
+        if (Active != IdleAnimation)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Mesh.PlayAnimation(IdleAnimation, true);
+            Active = IdleAnimation;
+        }
+        return;
+    }
+
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
     if (Movement && Movement->IsFalling())
     {
@@ -137,6 +180,7 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
             Mesh.PlayAnimation(JumpAnimation, false);
             Active = JumpAnimation;
+            State.bAppliedIdleReferencePose = false;
         }
         return;
     }
@@ -155,13 +199,28 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
             Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
             Mesh.PlayAnimation(RunAnimation, true);
             Active = RunAnimation;
+            State.bAppliedIdleReferencePose = false;
         }
         return;
     }
 
     const bool bWasWalking = Active == WalkAnimation;
     const float Threshold = bWasWalking ? PrinceAnimationPaths::StopWalkingSpeed : PrinceAnimationPaths::StartWalkingSpeed;
-    UAnimationAsset* Desired = HorizontalSpeedSquared >= FMath::Square(Threshold) ? WalkAnimation : IdleAnimation;
+    if (HorizontalSpeedSquared < FMath::Square(Threshold))
+    {
+        if (!State.bAppliedIdleReferencePose)
+        {
+            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            // A null single-node animation evaluates to no pose for this imported skeleton,
+            // making the mesh disappear. Keep a compatible source pose until the Manny reskin lands.
+            Mesh.PlayAnimation(IdleAnimation, true);
+            Active = IdleAnimation;
+            State.bAppliedIdleReferencePose = true;
+        }
+        return;
+    }
+
+    UAnimationAsset* Desired = WalkAnimation;
     if (Active == Desired)
     {
         return;
@@ -170,6 +229,7 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
     Mesh.PlayAnimation(Desired, true);
     Active = Desired;
+    State.bAppliedIdleReferencePose = false;
 }
 
 TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
@@ -179,7 +239,8 @@ TStatId UPrinceAnimationWorldSubsystem::GetStatId() const
 
 bool UPrinceAnimationWorldSubsystem::IsTickable() const
 {
-    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation && WalkAnimation && RunAnimation && JumpAnimation;
+    return bEnableRuntimeLocomotion && PrinceMesh && IdleAnimation &&
+        (bMannyCandidateMode || (WalkAnimation && RunAnimation && JumpAnimation));
 }
 
 bool UPrinceAnimationWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
