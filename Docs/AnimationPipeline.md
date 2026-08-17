@@ -150,12 +150,11 @@ Animation Blueprint that owns `Standing → Crouch → Crouch Idle → Standing`
 Foot placement is added after this graph owns the pose, not in the world
 subsystem.
 
-The UE 5.8 Game Animation Sample foundation has been migrated in isolation:
-`/Game/Blueprints/RetargetedCharacters/ABP_GenericRetarget` is a generic
-retarget graph (it deliberately has no fixed target skeleton) and
-`BP_Manny` is its reference setup. This is the correct reference for the
-Prince migration; it replaces neither the Prince mesh nor the active pawn
-until the new Character Blueprint is assembled and verified.
+Do not migrate the Game Animation Sample's generic retarget character as a
+shortcut: it pulls unrelated Echo, Paragon and MetaHuman dependencies (over
+2 GB) and is not a ready-made Prince Animation Blueprint. Reuse the sample as
+an authored-motion and architecture reference, but build the Prince graph on
+the AccuRIG skeleton with only the clips and modules this project needs.
 
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
