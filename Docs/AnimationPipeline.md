@@ -16,6 +16,13 @@ configured in `IK_POHPrince_UE5Retargetable`; the paired retargeter is
 is `UE58_IKQA_MM_Idle`. It is not connected to runtime until visual QA accepts
 the mesh and its idle pose.
 
+**2026-08-17: rejected for animation.** Blender audit found only five deform
+groups; 37,880 of 37,884 vertices are weighted to `root`, while the two foot
+groups each affect nearly the entire mesh. UE cannot correct broken skinning
+with IKRig, so this candidate stays quarantined. Re-rig the static mesh through
+AccuRIG (or equivalent) and validate the exported FBX first with
+`Scripts/Development/AuditFbxSkinWeights.py`.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
