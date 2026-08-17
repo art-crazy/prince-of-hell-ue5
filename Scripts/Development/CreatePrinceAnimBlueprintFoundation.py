@@ -11,7 +11,7 @@ import unreal
 FOLDER = "/Game/_Sandbox/Characters/PrinceOfHell/ProductionAnimation"
 SOURCE_CHARACTER = "/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"
 TARGET_CHARACTER = FOLDER + "/BP_POH_AccuRigCharacter"
-TARGET_ANIMBP = FOLDER + "/ABP_POH_AccuRig"
+TARGET_ANIMBP = FOLDER + "/ABP_POH_AccuRig_UE58"
 TARGET_MESH = "/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/SK_POHPrince_AccuRig"
 
 
@@ -29,16 +29,9 @@ if not character_bp:
 if not character_bp:
     raise RuntimeError("Unable to create Prince Character Blueprint")
 
-anim_bp = unreal.load_asset(TARGET_ANIMBP)
-if not anim_bp:
-    factory = unreal.AnimBlueprintFactory()
-    factory.set_editor_property("target_skeleton", mesh_asset.get_editor_property("skeleton"))
-    factory.set_editor_property("parent_class", unreal.AnimInstance)
-    anim_bp = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        TARGET_ANIMBP.rsplit("/", 1)[-1], FOLDER, unreal.AnimBlueprint, factory
-    )
-if not anim_bp:
-    raise RuntimeError("Unable to create Prince Animation Blueprint")
+anim_bp = require(TARGET_ANIMBP)
+if anim_bp.get_editor_property("target_skeleton") != mesh_asset.get_editor_property("skeleton"):
+    raise RuntimeError("Production AnimBP is not bound to the AccuRIG skeleton")
 
 cdo = unreal.get_default_object(character_bp.generated_class())
 mesh = cdo.get_editor_property("mesh")
@@ -47,6 +40,7 @@ mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_BLUEPR
 mesh.set_editor_property("anim_class", anim_bp.generated_class())
 
 movement = cdo.get_editor_property("character_movement")
+movement.set_editor_property("max_walk_speed", 260.0)
 movement.set_editor_property("max_walk_speed_crouched", 140.0)
 
 unreal.BlueprintEditorLibrary.compile_blueprint(anim_bp)

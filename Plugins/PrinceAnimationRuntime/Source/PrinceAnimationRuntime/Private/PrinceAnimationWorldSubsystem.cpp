@@ -196,6 +196,15 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
                 UE_LOG(LogPrinceAnimation, Log, TEXT("POH_ACCURIG_PLACEMENT scale=%.4f z=%.2f source_height=%.2f"), Scale, Z, SourceHeight);
             }
         }
+        // The isolated production character owns its pose through an AnimBP.
+        // Never let the historical single-node diagnostic subsystem overwrite
+        // that mode, otherwise it bypasses the state machine every frame.
+        if (Mesh->GetAnimationMode() == EAnimationMode::AnimationBlueprint)
+        {
+            UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_SKIP_ANIMBP character=%s"), *GetNameSafe(Character));
+            return;
+        }
+
         PrinceCharacters.Add(Character);
         UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
