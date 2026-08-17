@@ -41,6 +41,12 @@ if mesh.get_editor_property("animation_mode") != unreal.AnimationMode.ANIMATION_
     raise RuntimeError("Pawn is not in Animation Blueprint mode")
 if mesh.get_editor_property("anim_class") != anim_bp.generated_class():
     raise RuntimeError("Pawn uses the wrong locomotion AnimBP")
+rotation = mesh.get_editor_property("relative_rotation")
+if abs(rotation.yaw + 90.0) > 0.01:
+    raise RuntimeError("Pawn mesh is not aligned to UE Third Person forward")
+movement = cdo.get_editor_property("character_movement")
+if movement.get_editor_property("max_walk_speed") < 500.0:
+    raise RuntimeError("Pawn speed cannot reach authored run samples")
 if any(str(tag) == "POHRuntimeSingleNode" for tag in cdo.get_editor_property("tags")):
     raise RuntimeError("Legacy runtime animation override is enabled on production pawn")
 

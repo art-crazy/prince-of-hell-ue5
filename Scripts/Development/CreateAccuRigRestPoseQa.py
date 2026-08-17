@@ -61,9 +61,10 @@ location_z = -capsule.get_editor_property("capsule_half_height") - minimum_z * s
 
 mesh_component.set_editor_property("skeletal_mesh_asset", mesh_asset)
 mesh_component.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, location_z))
-# AccuRIG's UE export is already Z-up and forward aligned.  Do not apply any
-# Manny/Tripo corrective rotation here: it would invalidate the baseline.
-mesh_component.set_editor_property("relative_rotation", unreal.Rotator(roll=0.0, pitch=0.0, yaw=0.0))
+# The stock UE Third Person Character faces its gameplay-forward direction at
+# -90 degrees yaw.  Keep this template contract for every replacement mesh;
+# otherwise locomotion is visually rotated while movement remains correct.
+mesh_component.set_editor_property("relative_rotation", unreal.Rotator(roll=0.0, pitch=0.0, yaw=-90.0))
 mesh_component.set_editor_property("relative_scale3d", unreal.Vector(scale, scale, scale))
 mesh_component.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_SINGLE_NODE)
 mesh_component.set_editor_property("animation_data", unreal.SingleAnimationPlayData(
@@ -75,7 +76,7 @@ mesh_component.set_editor_property("owner_no_see", False)
 mesh_component.set_editor_property("cast_hidden_shadow", True)
 
 movement = character_cdo.get_editor_property("character_movement")
-movement.set_editor_property("max_walk_speed", 260.0)
+movement.set_editor_property("max_walk_speed", 500.0)
 movement.set_editor_property("max_walk_speed_crouched", 140.0)
 
 source_gm_cdo = unreal.get_default_object(source_game_mode.generated_class())

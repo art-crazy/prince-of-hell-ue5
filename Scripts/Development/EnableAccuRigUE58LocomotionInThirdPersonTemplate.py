@@ -33,6 +33,7 @@ if not mesh:
     raise RuntimeError("Prince pawn has no SkeletalMeshComponent")
 
 mesh.set_editor_property("skeletal_mesh_asset", mesh_asset)
+mesh.set_editor_property("relative_rotation", unreal.Rotator(roll=0.0, pitch=0.0, yaw=-90.0))
 mesh.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_BLUEPRINT)
 mesh.set_editor_property("anim_class", anim_bp.generated_class())
 # Clear old test playback data: only the authored state machine may supply pose.
@@ -46,13 +47,13 @@ tags = list(cdo.get_editor_property("tags"))
 cdo.set_editor_property("tags", [tag for tag in tags if str(tag) != "POHRuntimeSingleNode"])
 
 movement = cdo.get_editor_property("character_movement")
-movement.set_editor_property("max_walk_speed", 260.0)
+# Match UE's third-person authored locomotion range.  The source Blend Space
+# reaches its run samples above the old experimental 260 cm/s cap.
+movement.set_editor_property("max_walk_speed", 500.0)
 movement.set_editor_property("max_walk_speed_crouched", 140.0)
 
-unreal.BlueprintEditorLibrary.compile_blueprint(anim_bp)
 unreal.BlueprintEditorLibrary.compile_blueprint(character)
-for asset in (anim_bp, character):
-    if not unreal.EditorAssetLibrary.save_asset(asset.get_path_name(), only_if_is_dirty=False):
-        raise RuntimeError("Could not save: " + asset.get_path_name())
+if not unreal.EditorAssetLibrary.save_asset(character.get_path_name(), only_if_is_dirty=False):
+    raise RuntimeError("Could not save: " + character.get_path_name())
 
 unreal.log_warning("POH_UE58_LOCOMOTION_ENABLED pawn={} animbp={}".format(CHARACTER, ANIM_BP))
