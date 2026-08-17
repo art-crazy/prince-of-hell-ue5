@@ -41,11 +41,12 @@ for name in (
         raise RuntimeError("Unable to map retarget chain: " + name)
 
 # The duplicated seed must not carry reference-pose offsets from the abandoned
-# Tripo rig.  Start the candidate with AccuRIG's own valid rest pose instead.
+# Tripo rig. Start from AccuRIG's own valid rest pose instead. Do not call
+# chain-to-chain auto-align here: it rotates the already-correct AccuRIG neck
+# upward to match Manny's different head chain and makes the idle look skyward.
 candidate_mesh = target_rig.get_editor_property("preview_skeletal_mesh")
 target_bones = candidate_mesh.get_editor_property("skeleton").get_reference_pose().get_bone_names()
 controller.reset_retarget_pose("Default Pose", target_bones, side.TARGET)
-controller.auto_align_all_bones(side.TARGET, unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN)
 
 if not unreal.EditorAssetLibrary.save_asset(TARGET_RETARGETER, only_if_is_dirty=False):
     raise RuntimeError("Unable to save AccuRIG Prince retargeter")

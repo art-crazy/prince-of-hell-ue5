@@ -100,6 +100,10 @@ height offset. Profile `0` remains the existing NativeTripo fallback; profile
 `1` is retired direct-Manny diagnosis and must not be used. Profile `2` is the
 default runtime profile.
 
+The AccuRIG target pose must remain its imported rest pose. Do not use global
+chain-to-chain auto-align for this rig: its neck/head rest orientation already
+matches the mesh and auto-align produces an unnatural upward gaze.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is

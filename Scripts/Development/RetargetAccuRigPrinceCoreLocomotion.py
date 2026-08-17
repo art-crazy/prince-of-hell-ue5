@@ -46,7 +46,7 @@ inputs.ik_retarget_asset = retargeter
 inputs.target_path = TARGET_FOLDER
 inputs.prefix = "UE58_"
 inputs.include_referenced_assets = False
-inputs.overwrite_existing_files = False
+inputs.overwrite_existing_files = True
 outputs = unreal.IKRetargetBatchOperation.run_batch_retarget(inputs)
 if len(outputs) != len(assets):
     raise RuntimeError("Expected {} core clips, got {}".format(len(assets), len(outputs)))

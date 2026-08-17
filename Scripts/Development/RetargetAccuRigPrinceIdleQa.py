@@ -37,7 +37,7 @@ inputs.ik_retarget_asset = retargeter
 inputs.target_path = TARGET_FOLDER
 inputs.prefix = "UE58_IKQA_"
 inputs.include_referenced_assets = False
-inputs.overwrite_existing_files = False
+inputs.overwrite_existing_files = True
 outputs = unreal.IKRetargetBatchOperation.run_batch_retarget(inputs)
 if len(outputs) != 1:
     raise RuntimeError("Expected one AccuRIG idle QA asset, got {}".format(len(outputs)))

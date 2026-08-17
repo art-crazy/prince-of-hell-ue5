@@ -30,6 +30,14 @@ source_data = registry.get_asset_by_object_path(unreal.Name(source_blueprint.get
 if not source_data.is_valid():
     raise RuntimeError("Unable to resolve UE unarmed Animation Blueprint")
 
+# Batch retargeting cannot reliably overwrite a referenced Blend Space in
+# place; it creates a suffixed asset while leaving stale dependencies behind.
+# This folder is an isolated, generated candidate only, so recreate it as one
+# atomic asset set. Nothing in production may reference this path.
+if unreal.EditorAssetLibrary.does_directory_exist(TARGET_FOLDER):
+    if not unreal.EditorAssetLibrary.delete_directory(TARGET_FOLDER):
+        raise RuntimeError("Unable to clear generated AccuRIG motion set")
+
 inputs = unreal.IKRetargetBatchOperationInputs()
 inputs.assets_to_retarget = [source_data]
 inputs.source_mesh = source_mesh
@@ -38,7 +46,7 @@ inputs.ik_retarget_asset = retargeter
 inputs.target_path = TARGET_FOLDER
 inputs.prefix = "UE58_"
 inputs.include_referenced_assets = True
-inputs.overwrite_existing_files = False
+inputs.overwrite_existing_files = True
 outputs = unreal.IKRetargetBatchOperation.run_batch_retarget(inputs)
 if not outputs:
     raise RuntimeError("UE Unarmed Animation Blueprint retarget produced no assets")
