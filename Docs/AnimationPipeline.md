@@ -70,6 +70,25 @@ be imported only through `ImportAccuRigPrinceForValidation.py` to the isolated
 playable NativeTripo mesh until the reference pose and a single retargeted idle
 clip have passed visual QA.
 
+### Current AccuRIG candidate state
+
+The candidate was imported successfully on 2026-08-17 as
+`SK_POHPrince_AccuRig` (118 bones) with its materials. Its UE-compatible
+humanoid hierarchy was audited (`root`, `pelvis`, spine, limbs, hands and feet
+all present). The isolated assets are:
+
+- `IK_POHPrince_AccuRig` — target IK Rig with explicit humanoid chains.
+- `RTG_Manny_To_POHAccuRig` — Manny-to-Prince IK Retargeter using the native
+  AccuRIG rest pose, not copied Blender rotations.
+- `UE58_IKQA_MM_Idle` — exactly one retargeted UE 5.8 idle sequence.
+
+This is a **visual-QA gate**, not a runtime swap. Open only
+`UE58_IKQA_MM_Idle` on `SK_POHPrince_AccuRig` and verify the character is
+upright, visible, grounded and intact. If it passes, generate walk/run/jump in
+small batches with the same retargeter. If it fails, keep this evidence and
+adjust the IK Retargeter pose/chains; do not modify the mesh in Blender or
+reintroduce direct Manny assignment.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
