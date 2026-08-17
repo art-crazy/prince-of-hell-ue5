@@ -127,20 +127,13 @@ The first expansion batch is isolated in
 - `GAS_M_Neutral_Jump_F_Land_Roll_Lfoot` / `Rfoot` — forward landing roll
   variants.
 
-The crouch idle is wired into the temporary runtime adapter: hold **Left Ctrl**
-to crouch and release it to stand. The entry/exit clips remain isolated until
-their root transform is matched to the capsule change; using them early lifts
-the imported mesh off the ground. This temporary key fallback will be replaced
-by the production Enhanced Input action and Animation Blueprint. The roll
-clips remain isolated because their root-motion timing must be paired with a
-traversal action, rather than played as an in-place cosmetic clip.
-
-The runtime automatically compensates the visual mesh for the crouched capsule
-height, preserving the soles on the ground. For a rare re-export whose bounds
-need a cosmetic adjustment, use the UE console command
-`poh.AccuRigCrouchVisualOffset <centimetres>` while playing (for example,
-`poh.AccuRigCrouchVisualOffset 2`). Default `0` is the correct baseline;
-positive raises the crouched mesh and negative lowers it.
+The clips remain isolated until the production Character Blueprint and
+Animation Blueprint own crouch as one coordinated system: capsule height,
+base mesh offset, transition clips and Foot IK. The former temporary
+Left-Ctrl runtime override was removed because it bypassed that contract and
+could make the AccuRIG mesh float or sink. Roll clips also remain isolated
+until their root-motion timing is paired with a traversal action, rather than
+played as an in-place cosmetic clip.
 
 The repeatable migration and retarget scripts are
 `MigrateGameAnimationSampleCoreMoves.py` (run against the vault sample) and

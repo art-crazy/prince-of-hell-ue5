@@ -19,12 +19,6 @@ static TAutoConsoleVariable<int32> CVarPrinceAnimationProfile(
     TEXT("Prince animation profile. 0 = native Tripo fallback; 1 = retired direct-Manny diagnostic; 2 = default AccuRIG + UE5.8 IK retarget."),
     ECVF_Default);
 
-static TAutoConsoleVariable<float> CVarPrinceAccuRigCrouchVisualOffset(
-    TEXT("poh.AccuRigCrouchVisualOffset"),
-    0.0f,
-    TEXT("Fine vertical adjustment in cm for the AccuRIG mesh while crouched. Default 0 preserves grounded feet."),
-    ECVF_Default);
-
 namespace PrinceAnimationPaths
 {
     constexpr TCHAR Mesh[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/NativeTripo/SK_POHPrince_NativeTripo.SK_POHPrince_NativeTripo");
@@ -46,7 +40,6 @@ namespace PrinceAnimationPaths
     constexpr TCHAR AccuRigJump[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Jump.UE58_MM_Jump");
     constexpr TCHAR AccuRigFall[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Fall_Loop.UE58_MM_Fall_Loop");
     constexpr TCHAR AccuRigLand[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedUE58_ABP/UE58_MM_Land.UE58_MM_Land");
-    constexpr TCHAR AccuRigCrouchIdle[] = TEXT("/Game/_Sandbox/Characters/PrinceOfHell/AccuRig/RetargetedGAS_Core/GAS_M_Neutral_Crouch_Idle_Loop.GAS_M_Neutral_Crouch_Idle_Loop");
     constexpr float StartWalkingSpeed = 10.0f;
     constexpr float StopWalkingSpeed = 4.0f;
     constexpr float StartRunningSpeed = 400.0f;
@@ -75,7 +68,6 @@ void UPrinceAnimationWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
         JumpAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigJump);
         FallAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigFall);
         LandAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigLand);
-        CrouchIdleAnimation = LoadObject<UAnimationAsset>(nullptr, PrinceAnimationPaths::AccuRigCrouchIdle);
     }
     else
     {
@@ -140,7 +132,6 @@ void UPrinceAnimationWorldSubsystem::Tick(float)
         {
             if (!bMannyCandidateMode)
             {
-                UpdatePlayerCrouchState(*Character);
                 UpdatePlayerMovementSpeed(*Character);
             }
             UpdatePrince(*Character, *Mesh, Character->GetVelocity().SizeSquared2D());
@@ -165,35 +156,6 @@ void UPrinceAnimationWorldSubsystem::UpdatePlayerMovementSpeed(ACharacter& Chara
     Movement->MaxWalkSpeed = Controller->IsInputKeyDown(EKeys::LeftShift)
         ? PrinceAnimationPaths::SprintSpeed
         : PrinceAnimationPaths::WalkSpeed;
-}
-
-void UPrinceAnimationWorldSubsystem::UpdatePlayerCrouchState(ACharacter& Character) const
-{
-    if (!bAccuRigCandidateMode || !Character.IsPlayerControlled())
-    {
-        return;
-    }
-
-    APlayerController* Controller = Cast<APlayerController>(Character.GetController());
-    UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
-    if (!Controller || !Movement)
-    {
-        return;
-    }
-
-    // The template has no crouch action by default. Keep this temporary
-    // fallback isolated in the runtime adapter: Left Ctrl is later replaced
-    // by the production Enhanced Input action with the same behavior.
-    Movement->GetNavAgentPropertiesRef().bCanCrouch = true;
-    Movement->MaxWalkSpeedCrouched = 140.0f;
-    if (Controller->IsInputKeyDown(EKeys::LeftControl))
-    {
-        Character.Crouch();
-    }
-    else
-    {
-        Character.UnCrouch();
-    }
 }
 
 void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
@@ -235,13 +197,6 @@ void UPrinceAnimationWorldSubsystem::RegisterPrince(AActor* Actor)
             }
         }
         PrinceCharacters.Add(Character);
-        FPrinceAnimationState& State = AnimationStates.FindOrAdd(Mesh);
-        State.GroundedMeshRelativeLocation = Mesh->GetRelativeLocation();
-        State.bHasGroundedMeshRelativeLocation = true;
-        if (const UCapsuleComponent* Capsule = Character->GetCapsuleComponent())
-        {
-            State.StandingCapsuleHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
-        }
         UE_LOG(LogPrinceAnimation, Log, TEXT("POH_RUNTIME_ANIMATION_REGISTER character=%s mesh=%s"), *GetNameSafe(Character), *GetNameSafe(PrinceMesh));
     }
 }
@@ -250,27 +205,6 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
 {
     FPrinceAnimationState& State = AnimationStates.FindOrAdd(&Mesh);
     TObjectPtr<UAnimationAsset>& Active = State.ActiveAnimation;
-
-    // CharacterMovement changes the mesh translation while changing capsule
-    // height for a crouch.  That default assumes the template mannequin's
-    // mesh offset, so it lifts this imported AccuRIG mesh off the floor.
-    // Preserve the grounded placement captured during registration instead.
-    if (bAccuRigCandidateMode && State.bHasGroundedMeshRelativeLocation)
-    {
-        FVector MeshLocation = State.GroundedMeshRelativeLocation;
-        if (Character.bIsCrouched)
-        {
-            if (const UCapsuleComponent* Capsule = Character.GetCapsuleComponent())
-            {
-                // Crouch moves the capsule's origin down to preserve collision
-                // at the feet. Counter that movement on this custom visual
-                // mesh, otherwise it sinks into the floor.
-                MeshLocation.Z += State.StandingCapsuleHalfHeight - Capsule->GetUnscaledCapsuleHalfHeight();
-            }
-            MeshLocation.Z += CVarPrinceAccuRigCrouchVisualOffset.GetValueOnGameThread();
-        }
-        Mesh.SetRelativeLocation(MeshLocation);
-    }
 
     if (bMannyCandidateMode)
     {
@@ -286,19 +220,6 @@ void UPrinceAnimationWorldSubsystem::UpdatePrince(ACharacter& Character, USkelet
     }
 
     const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
-    const bool bIsCrouched = Character.bIsCrouched;
-    if (bAccuRigCandidateMode && bIsCrouched && CrouchIdleAnimation)
-    {
-        if (Active != CrouchIdleAnimation)
-        {
-            Mesh.SetAnimationMode(EAnimationMode::AnimationSingleNode);
-            Mesh.PlayAnimation(CrouchIdleAnimation, true);
-            Active = CrouchIdleAnimation;
-            State.bAppliedIdleReferencePose = false;
-        }
-        return;
-    }
-
     if (Movement && Movement->IsFalling())
     {
         State.bWasFalling = true;
