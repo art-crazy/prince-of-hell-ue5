@@ -41,12 +41,15 @@ The script writes its output to:
 
 1. Blender validator: exactly one armature, every reachable Manny deform bone,
    and core Manny vertex-weight groups.
-2. UE import validation: import as a new skeletal mesh using `SK_Mannequin`.
+2. Blender geometry/bind diagnostic: no unweighted vertices, degenerate faces,
+   invalid bone matrices or unexpected armature modifier target. It writes
+   `Saved/ReskinPipeline/POH_Prince_MannyCandidate.geometry.json`.
+3. UE import validation: import as a new skeletal mesh using `SK_Mannequin`.
    Reject on a generated duplicate skeleton. A current UE 5.8 Interchange
    warning about bind-pose merging is tracked as a blocker until visual QA.
-3. Direct-asset check: assign `/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle`
+4. Direct-asset check: assign `/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle`
    to the candidate mesh in a preview window. The mesh must remain visible.
-4. Runtime check: update the character only after idle, walking, running,
+5. Runtime check: update the character only after idle, walking, running,
    jump, fall and landing all pass manual QA.
 
 ## UE isolated import
@@ -59,6 +62,15 @@ $project = 'C:/Users/artcr/Documents/Unreal Projects/test/test.uproject'
 $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
 & $editor $project -run=pythonscript -script='C:/Users/artcr/Documents/Unreal Projects/test/Scripts/Reskin/ImportPrinceMannyCandidate.py' -unattended -nullrhi
 & $editor $project -run=pythonscript -script='C:/Users/artcr/Documents/Unreal Projects/test/Scripts/Reskin/ValidatePrinceMannyCandidate.py' -unattended -nullrhi
+```
+
+## Geometry diagnostic
+
+Run this before testing any animation. A failure here means animation clips
+are not involved and must remain disabled:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --factory-startup --background --python 'C:\Users\artcr\Documents\Unreal Projects\test\Scripts\Reskin\AnalyzeMannyCandidate.py' -- 'C:\Users\artcr\Documents\Unreal Projects\test\Saved\ReskinPipeline\POH_Prince_MannyCandidate.fbx' 'C:\Users\artcr\Documents\Unreal Projects\test\Saved\ReskinPipeline\POH_Prince_MannyCandidate.geometry.json'
 ```
 
 Close Unreal Editor before executing a commandlet: `.uasset`, maps, config and
