@@ -156,6 +156,18 @@ shortcut: it pulls unrelated Echo, Paragon and MetaHuman dependencies (over
 an authored-motion and architecture reference, but build the Prince graph on
 the AccuRIG skeleton with only the clips and modules this project needs.
 
+The isolated production foundation now exists at
+`/Game/_Sandbox/Characters/PrinceOfHell/ProductionAnimation`:
+
+- `BP_POH_AccuRigCharacter` — a Third Person character derived from the
+  project template, using the AccuRIG mesh in **Animation Blueprint** mode.
+- `ABP_POH_AccuRig` — a new AnimBP bound directly to
+  `SK_POHPrince_AccuRig_Skeleton`.
+
+It is intentionally not the active pawn yet. The next change is the actual
+AnimGraph state machine and variables; only after its isolated validation may
+the game mode swap from the single-node diagnostic character.
+
 `IK_POHPrince_Native` and `RTG_Manny_To_POHNative` are the production
 retargeting pair. Manny uses `pelvis` as retarget root; Prince uses `Hip`.
 The target retarget pose always starts from the native Tripo rest pose and is
