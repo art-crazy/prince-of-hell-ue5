@@ -1,0 +1,82 @@
+{
+  "asset": "PrinceOfHell",
+  "status": "sandbox_imported_pending_retarget",
+  "source": {
+    "provider": "Tripo",
+    "generation_profile": "smart_mesh_v3.1_4k_pbr_80k_triangles",
+    "license_checked": true,
+    "license_url": "https://www.tripo3d.ai/pricing",
+    "license_basis": "Active subscription with commercial-use export access verified in Tripo Studio on 2026-08-16.",
+    "source_file": "SourceArt/Characters/PrinceOfHell/Tripo/2026-08-16/tripo_convert_83ab0427-e3bb-46a7-b1ba-ce43b6059f6f.fbx",
+    "source_archive": "SourceArt/Characters/PrinceOfHell/Tripo/2026-08-16/skeleton-warrior-tripo-v3.1-4k.zip",
+    "source_sha256": "b752c47505d9f99fd4856825abd6ebbdbe9226220623d90f6a96aedbb2e6c01e",
+    "rigged_source_file": "SourceArt/Characters/PrinceOfHell/Tripo/2026-08-16/Rigged/tripo_convert_64b875e2-394a-4cba-9050-fdd54b8c44c1.fbx",
+    "rigged_source_archive": "SourceArt/Characters/PrinceOfHell/Tripo/2026-08-16/Rigged/skeleton-warrior-tripo-v2.5-humanoid-rig-4k.zip",
+    "rigged_source_sha256": "1059beff9b84ab35771654f97739c2b2b056e396527353b9f2a429cc4c139567",
+    "rigging_provider": "Tripo Auto-Rig v2.5",
+    "rigging_cost_credits": 20,
+    "ue_sandbox_asset": "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig",
+    "ue_skeleton_asset": "/Game/_Sandbox/Characters/PrinceOfHell/SK_POHPrince_TripoRig_Skeleton",
+    "ue_ik_rig_asset": "/Game/_Sandbox/Characters/PrinceOfHell/Rigging/IK_POHPrince",
+    "ue_physics_asset": "/Game/_Sandbox/Characters/PrinceOfHell/PHYS_POHPrince",
+    "retarget_root_bone": "Pelvis",
+    "root_motion_bone": "Root",
+    "hand_socket": {
+      "name": "Socket_HandDetach",
+      "bone": "L_Forearm",
+      "offset": "identity",
+      "visual_review": "intentional_telekinetic_hover_gap; locomotion stability still pending"
+    },
+    "promotion_status": "sandbox_imported"
+  },
+  "animation_sources": [
+    {
+      "id": "ue-game-animation-sample-reference",
+      "provider": "Epic Games / Fab",
+      "source_file": "C:\\Users\\artcr\\UnrealReferences\\GameAnimationSample\\GameAnimationSample.uproject",
+      "license_url": "https://www.fab.com/listings/880e319a-a59e-4ed2-b268-b32dac7fa016",
+      "license_checked": true,
+      "skeleton_target": "UEFN Mannequin Skeleton -> POH Tripo skeleton",
+      "root_motion": "idle, idle-turn, walk and run evaluation clips; root motion not enabled for gameplay",
+      "intended_use": "sandbox-only retarget validation; UE-only content, not supplied to generative AI services",
+      "promotion_status": "sandbox_retarget_evaluated",
+      "sandbox_assets": [
+        "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_IdleTurnLeft",
+        "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_Idle",
+        "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_WalkF",
+        "/Game/_Sandbox/Animation/PrinceOfHell/Retargeted/A_POH_RunF"
+      ]
+    },
+    {
+      "id": "template-replace-before-use",
+      "provider": null,
+      "source_file": null,
+      "license_url": null,
+      "license_checked": false,
+      "skeleton_target": null,
+      "root_motion": null,
+      "intended_use": null,
+      "promotion_status": "sandbox_only"
+    }
+  ],
+  "qa": {
+    "checked_with": "Blender 5.2.0 LTS",
+    "checked_at": "2026-08-16",
+    "triangle_count": 76100,
+    "vertex_count": 37892,
+    "material_slots": 2,
+    "has_uv0": true,
+    "has_pbr_textures": true,
+    "humanoid_rig": true,
+    "armature_count": 1,
+    "bone_count": 41,
+    "ue_sandbox_qa_checked_at": "2026-08-16",
+    "ue_sandbox_material_slots": 1,
+    "ue_sandbox_vertex_count_lod0": 48351,
+    "ue_sandbox_lod_count": 1,
+    "ue_sandbox_section_count_lod0": 1,
+    "ue_sandbox_validation": "passed",
+    "lods_created": false,
+    "lod_promotion_gate": "blocked: author and visually validate LOD1 and LOD2 from the cleaned source; do not auto-reduce the sandbox hero"
+  }
+}

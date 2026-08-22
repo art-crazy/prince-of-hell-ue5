@@ -1,0 +1,4 @@
+# Generated-equivalent Codex client endpoint for Unreal MCP in UE 5.8.
+# The server is hosted only by the local Unreal Editor process.
+[mcp_servers.unreal-mcp]
+url = "http://127.0.0.1:8000/mcp"

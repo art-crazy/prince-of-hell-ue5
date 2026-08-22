@@ -1,0 +1,38 @@
+schema: spec-driven
+
+context: |
+  Prince of Hell is a single-player dark third-person action RPG made in Unreal Engine 5.8.
+  Runtime systems use C++; designers configure content in Blueprints; Python 3.11 is editor-only.
+  The vertical slice is the source of truth: detachable burning hand, soul transfer, a compact arena,
+  one ordinary enemy and one elite enemy. Prefer modern, production-ready UE-native systems.
+  Use GAS, Enhanced Input, CommonUI, Motion Warping, Niagara, MetaSounds, StateTree, EQS and AI Perception.
+  Do not make Mover, ChaosMover or Gameplay Camera System a production dependency without an isolated spike.
+  SourceArt contains immutable source exports; Content contains imported UE assets; binaries go through Git LFS.
+  Read Docs/Conventions.md, Docs/TechStack.md and Docs/ProductionPlan.md before changing architecture.
+
+rules:
+  proposal:
+    - Keep the proposal under 700 words and name the affected gameplay pillar or production area.
+    - State player-facing outcome, acceptance criteria, non-goals, data/asset impact and rollback path.
+    - Any new UE plugin must include its maturity, reason for selection and removal/fallback plan.
+    - Any imported or generated art must include source, license status, target platform budgets and LFS impact.
+  design:
+    - Describe C++/Blueprint responsibility boundaries and the relevant Gameplay Tags, data assets or save data.
+    - Prefer one reusable system over a one-off solution for the vertical slice.
+  tasks:
+    - Each task must be independently verifiable and preserve a runnable main branch.
+    - Include test-map/debug validation and documentation/manifest updates when an asset contract changes.
+  specs:
+    - Use testable SHALL statements and include at least one failure or edge-case scenario for player-facing mechanics.
+
+operations:
+  apply:
+    guidance:
+      - Do not start a large gameplay, architecture, asset-pipeline, plugin or performance change without an active OpenSpec change.
+      - Small spelling, formatting, documentation-link and isolated bug fixes may proceed without a change when they do not alter a contract.
+      - Run the relevant build, automated validation or test-map check; report any unverified item explicitly.
+      - Commit implementation, specs and manifests together; keep generated UE cache files out of Git.
+  archive:
+    guidance:
+      - Archive only after acceptance criteria are checked and the resulting persistent specification reflects the shipped behavior.
+      - Record deferred work as a new proposed change rather than silently expanding the current scope.
