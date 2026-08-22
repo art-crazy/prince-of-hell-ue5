@@ -1,3 +1,5 @@
+> **Not implemented in this Blueprint-only project.** See [`../../STATUS.md`](../../STATUS.md).
+
 ## Why
 
 The prototype loop currently keeps health, hand state and combat outcomes in isolated placeholder logic. A small Gameplay Ability System foundation is needed now so damage, stamina and the signature hand/soul actions share authoritative, observable state before final character art arrives.

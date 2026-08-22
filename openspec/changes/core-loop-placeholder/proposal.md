@@ -1,3 +1,5 @@
+> **Mostly not implemented in this Blueprint-only project** — imported from the C++ prototype repo. See [`../../STATUS.md`](../../STATUS.md).
+
 ## Why
 
 The Tripo hero cannot yet be exported, but the vertical slice must prove the combat fantasy now. A UE5 Manny-based implementation lets us validate responsiveness, ability contracts and performance before art integration, then replace only the presentation layer after character QA.

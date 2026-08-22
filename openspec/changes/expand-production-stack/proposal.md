@@ -1,3 +1,5 @@
+> **Partially implemented in this Blueprint-only project** — imported from the C++ prototype repo; foundation items match, animation/CI items don't. See [`../../STATUS.md`](../../STATUS.md).
+
 ## Why
 
 The project already has a sound UE5 gameplay stack, but its production loop needs stronger safeguards before agents and imported AI art begin to create expensive rework. Small teams and successful prototypes usually win by reusing proven engine samples, automating asset/functional checks, and treating animation and performance as measurable systems rather than late polish.

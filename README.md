@@ -7,3 +7,7 @@ The original C++ prototype remains in `prince-of-hell-ue5 5.8`; this project kee
 Next integration step: create a child of `BP_ThirdPersonCharacter`, retarget its locomotion to the Prince skeleton, then set that child as the default pawn. Do not replace the template camera system.
 
 Parallel agent workflow: [Docs/AI/SUBAGENT_WORKFLOW.md](Docs/AI/SUBAGENT_WORKFLOW.md).
+
+`openspec/` was imported from the separate C++ prototype repo and does not reflect
+this Blueprint-only project's real state — see [openspec/STATUS.md](openspec/STATUS.md)
+before trusting any checkbox there.

@@ -1,3 +1,5 @@
+> **Not implemented in this Blueprint-only project.** See [`../../STATUS.md`](../../STATUS.md).
+
 ## Why
 
 The GAS foundation is verified but player actions still enter through placeholder methods, and resources are visible only in logs. The vertical slice needs ability-owned action flow and an in-game debug readout before enemy AI adds more state.
