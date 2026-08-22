@@ -38,7 +38,9 @@ if not rig:
 controller = unreal.IKRigController.get_controller(rig)
 if not controller.set_skeletal_mesh(mesh):
     raise RuntimeError("Unable to bind native Prince mesh to IK Rig")
-if not controller.set_retarget_root("Root"):
+# Manny is root -> pelvis.  Prince is Root -> Hip -> Pelvis, therefore Hip
+# (not Pelvis) is the structural counterpart of Manny's animated body root.
+if not controller.set_retarget_root("Hip"):
     raise RuntimeError("Unable to set native Prince retarget root")
 
 existing = {str(chain.chain_name) for chain in controller.get_retarget_chains()}

@@ -26,11 +26,16 @@ if not retargeter:
 
 controller = unreal.IKRetargeterController.get_controller(retargeter)
 source_or_target = unreal.RetargetSourceOrTarget
+
+# This asset can be regenerated repeatedly.  add_default_ops() appends a new
+# stack, so clearing first is essential: duplicated FK/IK/root passes corrupt
+# the exported pose and can collapse the character outside the camera.
+controller.remove_all_ops()
 controller.set_ik_rig(source_or_target.SOURCE, source_rig)
 controller.set_ik_rig(source_or_target.TARGET, target_rig)
+controller.add_default_ops()
 controller.assign_ik_rig_to_all_ops(source_or_target.SOURCE, source_rig)
 controller.assign_ik_rig_to_all_ops(source_or_target.TARGET, target_rig)
-controller.add_default_ops()
 
 for name in (
     "Spine", "Neck", "Head", "LeftLeg", "LeftFoot", "RightLeg", "RightFoot",
@@ -38,6 +43,18 @@ for name in (
 ):
     if not controller.set_source_chain(name, name):
         raise RuntimeError(f"Unable to map retarget chain: {name}")
+
+# Chain-to-chain alignment is deterministic and works across the intentionally
+# different body proportions of Manny and the Prince mesh.
+# The duplicated seed retargeter has an unrelated target pose.  Reset it before
+# alignment; otherwise auto-align compounds offsets belonging to the retired
+# TripoRig mesh.
+target_bones = target_rig.get_editor_property("preview_skeletal_mesh").get_editor_property("skeleton").get_reference_pose().get_bone_names()
+controller.reset_retarget_pose("Default Pose", target_bones, source_or_target.TARGET)
+controller.auto_align_all_bones(
+    source_or_target.TARGET,
+    unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN,
+)
 
 if not unreal.EditorAssetLibrary.save_asset(TARGET_RETARGETER, only_if_is_dirty=False):
     raise RuntimeError("Unable to save native Prince retargeter")
