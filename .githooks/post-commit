@@ -1,0 +1,16 @@
+#!/bin/sh
+# Auto-tags every commit as vMAJOR.MINOR.BUILD, e.g. v0.1.91.
+# MAJOR.MINOR come from the VERSION file (bump those by hand for milestones);
+# BUILD is the total commit count, so it always increases and never collides.
+
+VERSION_FILE="$(git rev-parse --show-toplevel)/VERSION"
+BASE=$(cat "$VERSION_FILE" 2>/dev/null || echo "0.1")
+COUNT=$(git rev-list --count HEAD)
+TAG="v${BASE}.${COUNT}"
+
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  exit 0
+fi
+
+git tag -a "$TAG" -m "Auto version $TAG" HEAD
+echo "Tagged $TAG"
