@@ -8,6 +8,9 @@ Next integration step: create a child of `BP_ThirdPersonCharacter`, retarget its
 
 Parallel agent workflow: [Docs/AI/SUBAGENT_WORKFLOW.md](Docs/AI/SUBAGENT_WORKFLOW.md).
 
+Editing Blueprints via the MCP automation bridge: read [Docs/AI/McpAutomationBridgeNotes.md](Docs/AI/McpAutomationBridgeNotes.md)
+first — it lists which node types are reliable and which silently fail.
+
 `openspec/` was imported from the separate C++ prototype repo and does not reflect
 this Blueprint-only project's real state — see [openspec/STATUS.md](openspec/STATUS.md)
 before trusting any checkbox there.
