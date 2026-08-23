@@ -59,6 +59,7 @@ private:
 	void TryBindInput();
 	void OnLockOnTriggered();
 	AActor* FindBestTarget();
+	bool HasLineOfSight(const FVector& ViewLoc, const AActor* Candidate) const;
 	void SetLockedTarget(AActor* NewTarget);
 
 	UFUNCTION(Server, Reliable)

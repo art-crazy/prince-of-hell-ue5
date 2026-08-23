@@ -106,7 +106,7 @@ AActor* ULockOnComponent::FindBestTarget()
 
 		const FVector ToCandidate = (Candidate->GetActorLocation() - ViewLoc).GetSafeNormal();
 		const float Dot = FVector::DotProduct(ViewForward, ToCandidate);
-		if (Dot > BestDot)
+		if (Dot > BestDot && HasLineOfSight(ViewLoc, Candidate))
 		{
 			BestDot = Dot;
 			Best = Candidate;
@@ -114,6 +114,16 @@ AActor* ULockOnComponent::FindBestTarget()
 	}
 
 	return Best;
+}
+
+bool ULockOnComponent::HasLineOfSight(const FVector& ViewLoc, const AActor* Candidate) const
+{
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(GetOwner());
+	Params.AddIgnoredActor(Candidate);
+	const bool bBlocked = GetWorld()->LineTraceSingleByChannel(Hit, ViewLoc, Candidate->GetActorLocation(), ECC_Visibility, Params);
+	return !bBlocked;
 }
 
 void ULockOnComponent::SetLockedTarget(AActor* NewTarget)
@@ -144,9 +154,14 @@ void ULockOnComponent::Server_SetLockedTarget_Implementation(AActor* NewTarget)
 {
 	if (NewTarget)
 	{
+		if (!IsValid(NewTarget) || !NewTarget->ActorHasTag(TargetableTag))
+		{
+			return;
+		}
+
 		const AActor* Owner = GetOwner();
 		const bool bWithinRange = FVector::DistSquared(Owner->GetActorLocation(), NewTarget->GetActorLocation()) <= FMath::Square(SearchRadius * 1.5f);
-		if (!IsValid(NewTarget) || !NewTarget->ActorHasTag(TargetableTag) || !bWithinRange)
+		if (!bWithinRange)
 		{
 			return;
 		}
